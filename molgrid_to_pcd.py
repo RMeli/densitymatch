@@ -7,6 +7,28 @@ import open3d as o3d
 
 from openbabel import pybel
 
+name_to_rgb = {
+    "AliphaticCarbonXSHydrophobe":  (96, 96, 96),
+    "AliphaticCarbonXSNonHydrophobe": (96, 96, 96),
+    "AromaticCarbonXSHydrophobe": (192, 192, 192),
+    "AromaticCarbonXSNonHydrophobe": (192, 192, 192),
+    "Bromine": (0, 204, 0),
+    "Chlorine": (0, 204, 0),
+    "Fluorine": (0, 204, 0),
+    "Nitrogen": (0, 0, 204),
+    "NitrogenXSAcceptor": (0, 128, 255),
+    "NitrogenXSDonor": (102, 178, 255),
+    "NitrogenXSDonorAcceptor": (204, 229, 255),
+    "Oxygen": (153, 0, 0),
+    "OxygenXSAcceptor": (255, 0, 0),
+    "OxygenXSDonorAcceptor": (255, 102, 102),
+    "Phosphorus": (153, 76, 0),
+    "Sulfur": (204, 204, 0),
+    "SulfurAcceptor": (153, 153, 0),
+    "Iodine": (0, 204, 0),
+    "Boron": (153, 76, 0),
+}
+
 p = argparse.ArgumentParser(description="Visualize point cloud (PCD file) with Open3D")
 p.add_argument("sdf", type=str, help="SDF file")
 p.add_argument("-r", "--resolution", type=float, default=0.5, help="Grid resolution")
@@ -104,49 +126,35 @@ X, Y, Z = torch.meshgrid(x, y, z)
 n_points = torch.sum(cloud)
 
 XYZ = torch.empty(n_points, 3)
+RGB = torch.empty(n_points, 3)
 
 start = 0
 for i, name in enumerate(t.get_type_names()):
     idx = cloud[i]  # Indices of cloud points
+    rgb = name_to_rgb[name]
+
+    print(f"{name}: {round(torch.sum(idx).item())}")
     
     step = torch.sum(idx).item()
     stop = start + step
 
     #print(start, stop, step)
-
     XYZ[start:stop,0] = X[idx].reshape((-1,))
     XYZ[start:stop,1] = Y[idx].reshape((-1,))
     XYZ[start:stop,2] = Z[idx].reshape((-1,))
+    RGB[start:stop,0] = rgb[0]
+    RGB[start:stop,1] = rgb[1]
+    RGB[start:stop,2] = rgb[2]
 
     start = stop
 
+# Scale RGB values
+# RGB values needs to be in [0,1]
+RGB = RGB / 255
+
+# Manually build point cloud object
 pcd = o3d.geometry.PointCloud()
 pcd.points = o3d.utility.Vector3dVector(XYZ.cpu().numpy())
+pcd.colors = o3d.utility.Vector3dVector(RGB.cpu().numpy()) 
 
-o3d.io.write_point_cloud("test.pcd", pcd, write_ascii=True)
-
-
-with open(args.output, "w") as fout:
-
-    fout.write(
-        f"""VERSION .7
-    FIELDS x y z rgb
-    SIZE 8 8 8 4
-    TYPE F F F F
-    COUNT 1 1 1 1
-    WIDTH {n_points}
-    HEIGHT 1
-    VIEWPOINT 0 0 0 1 0 0 0
-    POINTS {n_points}
-    DATA ascii\n"""
-    )
-
-    for i, name in enumerate(t.get_type_names()):
-        idx = cloud[i]  # Indices of cloud points
-
-        for x, y, z in zip(
-            X[idx].cpu().numpy(), Y[idx].cpu().numpy(), Z[idx].cpu().numpy()
-        ):
-            # Miltiplication if to differentiate colors more
-            #fout.write(f"{x:.5f} {y:.5f} {z:.5f} {i * 1000}\n")
-            fout.write(f"{x:.5f} {y:.5f} {z:.5f} {0.0}\n") # Same color
+o3d.io.write_point_cloud(args.output, pcd, write_ascii=True)

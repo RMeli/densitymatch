@@ -3,6 +3,8 @@ import torch
 import argparse
 import os
 
+import open3d as o3d
+
 from openbabel import pybel
 
 p = argparse.ArgumentParser(description="Visualize point cloud (PCD file) with Open3D")
@@ -101,6 +103,29 @@ X, Y, Z = torch.meshgrid(x, y, z)
 # Total number of points in the cloud
 n_points = torch.sum(cloud)
 
+XYZ = torch.empty(n_points, 3)
+
+start = 0
+for i, name in enumerate(t.get_type_names()):
+    idx = cloud[i]  # Indices of cloud points
+    
+    step = torch.sum(idx).item()
+    stop = start + step
+
+    #print(start, stop, step)
+
+    XYZ[start:stop,0] = X[idx].reshape((-1,))
+    XYZ[start:stop,1] = Y[idx].reshape((-1,))
+    XYZ[start:stop,2] = Z[idx].reshape((-1,))
+
+    start = stop
+
+pcd = o3d.geometry.PointCloud()
+pcd.points = o3d.utility.Vector3dVector(XYZ.cpu().numpy())
+
+o3d.io.write_point_cloud("test.pcd", pcd, write_ascii=True)
+
+
 with open(args.output, "w") as fout:
 
     fout.write(
@@ -123,4 +148,5 @@ with open(args.output, "w") as fout:
             X[idx].cpu().numpy(), Y[idx].cpu().numpy(), Z[idx].cpu().numpy()
         ):
             # Miltiplication if to differentiate colors more
-            fout.write(f"{x:.5f} {y:.5f} {z:.5f} {i * 1000}\n")
+            #fout.write(f"{x:.5f} {y:.5f} {z:.5f} {i * 1000}\n")
+            fout.write(f"{x:.5f} {y:.5f} {z:.5f} {0.0}\n") # Same color

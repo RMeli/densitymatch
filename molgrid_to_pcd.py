@@ -38,8 +38,9 @@ p.add_argument(
 p.add_argument(
     "-m", "--ligmap", type=str, default="files/ligmap", help="Ligand types file"
 )
-p.add_argument("-o", "--output", type=str, default=None, help="Output file")
+p.add_argument("-o", "--output", type=str, default=None, help="Output file (.pcd, .xyzrgb, ...)")
 p.add_argument("--dx", action="store_true", help="Output grids as DX files")
+p.add_argument("--ascii", action="store_true", help="Output file in ASCII format")
 
 args = p.parse_args()
 
@@ -157,4 +158,4 @@ pcd = o3d.geometry.PointCloud()
 pcd.points = o3d.utility.Vector3dVector(XYZ.cpu().numpy())
 pcd.colors = o3d.utility.Vector3dVector(RGB.cpu().numpy()) 
 
-o3d.io.write_point_cloud(args.output, pcd, write_ascii=True)
+o3d.io.write_point_cloud(args.output, pcd, write_ascii=args.ascii)

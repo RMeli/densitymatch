@@ -6,9 +6,35 @@ import os
 import open3d as o3d
 
 from openbabel import pybel
+from collections import defaultdict
 
-name_to_rgb = {
-    "AliphaticCarbonXSHydrophobe":  (96, 96, 96),
+name_to_rgb_sensaas = defaultdict(
+    lambda: (0, 0, 255),  # Default value (everything else)
+    {
+        "AliphaticCarbonXSHydrophobe": (0, 255, 0),
+        "AliphaticCarbonXSNonHydrophobe": (0, 255, 0),
+        "AromaticCarbonXSHydrophobe": (0, 255, 0),
+        "AromaticCarbonXSNonHydrophobe": (0, 255, 0),
+        "Bromine": (230, 230, 230),
+        "Chlorine": (230, 230, 230),
+        "Fluorine": (255, 0, 0),
+        "Nitrogen": (255, 0, 0),
+        "NitrogenXSAcceptor": (255, 0, 0),
+        "NitrogenXSDonor": (255, 0, 0),
+        "NitrogenXSDonorAcceptor": (255, 0, 0),
+        "Oxygen": (255, 0, 0),
+        "OxygenXSAcceptor": (255, 0, 0),
+        "OxygenXSDonorAcceptor": (255, 0, 0),
+        "Phosphorus": (0, 255, 0),
+        "Sulfur": (255, 0, 0),
+        "SulfurAcceptor": (255, 0, 0),
+        "Iodine": (230, 230, 230),
+        "Boron": (0, 255, 0),
+    },
+)
+
+name_to_rgb_molgrid = {
+    "AliphaticCarbonXSHydrophobe": (96, 96, 96),
     "AliphaticCarbonXSNonHydrophobe": (96, 96, 96),
     "AromaticCarbonXSHydrophobe": (192, 192, 192),
     "AromaticCarbonXSNonHydrophobe": (192, 192, 192),
@@ -38,11 +64,20 @@ p.add_argument(
 p.add_argument(
     "-m", "--ligmap", type=str, default="files/ligmap", help="Ligand types file"
 )
-p.add_argument("-o", "--output", type=str, default=None, help="Output file (.pcd, .xyzrgb, ...)")
+p.add_argument(
+    "-o", "--output", type=str, default=None, help="Output file (.pcd, .xyzrgb, ...)"
+)
 p.add_argument("--dx", action="store_true", help="Output grids as DX files")
 p.add_argument("--ascii", action="store_true", help="Output file in ASCII format")
+p.add_argument("--sensaas", action="store_true", help="Use SENSAAS color scheme")
 
 args = p.parse_args()
+
+# Select color scheme to use
+if args.sensaas:
+    name_to_rgb = name_to_rgb_sensaas
+else:
+    name_to_rgb = name_to_rgb_molgrid
 
 system = os.path.splitext(os.path.basename(args.sdf))[0]
 
@@ -135,17 +170,17 @@ for i, name in enumerate(t.get_type_names()):
     rgb = name_to_rgb[name]
 
     print(f"{name}: {round(torch.sum(idx).item())}")
-    
+
     step = torch.sum(idx).item()
     stop = start + step
 
-    #print(start, stop, step)
-    XYZ[start:stop,0] = X[idx].reshape((-1,))
-    XYZ[start:stop,1] = Y[idx].reshape((-1,))
-    XYZ[start:stop,2] = Z[idx].reshape((-1,))
-    RGB[start:stop,0] = rgb[0]
-    RGB[start:stop,1] = rgb[1]
-    RGB[start:stop,2] = rgb[2]
+    # print(start, stop, step)
+    XYZ[start:stop, 0] = X[idx].reshape((-1,))
+    XYZ[start:stop, 1] = Y[idx].reshape((-1,))
+    XYZ[start:stop, 2] = Z[idx].reshape((-1,))
+    RGB[start:stop, 0] = rgb[0]
+    RGB[start:stop, 1] = rgb[1]
+    RGB[start:stop, 2] = rgb[2]
 
     start = stop
 
@@ -156,6 +191,6 @@ RGB = RGB / 255
 # Manually build point cloud object
 pcd = o3d.geometry.PointCloud()
 pcd.points = o3d.utility.Vector3dVector(XYZ.cpu().numpy())
-pcd.colors = o3d.utility.Vector3dVector(RGB.cpu().numpy()) 
+pcd.colors = o3d.utility.Vector3dVector(RGB.cpu().numpy())
 
 o3d.io.write_point_cloud(args.output, pcd, write_ascii=args.ascii)

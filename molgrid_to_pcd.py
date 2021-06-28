@@ -8,6 +8,11 @@ import open3d as o3d
 from openbabel import pybel
 from collections import defaultdict
 
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
 name_to_rgb_sensaas = defaultdict(
     lambda: (0, 0, 255),  # Default value (everything else)
     {
@@ -96,7 +101,7 @@ gdims = gm.grid_dimensions(t.num_types())
 
 # Pre-allocate grid
 # Only one example (batch size is 1)
-grid = torch.zeros(1, *gdims, dtype=torch.float32, device="cuda:0")
+grid = torch.zeros(1, *gdims, dtype=torch.float32, device=device)
 
 obmol = next(pybel.readfile("sdf", args.sdf))
 obmol.addh()

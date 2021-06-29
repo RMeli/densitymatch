@@ -1,7 +1,5 @@
 import molgrid
 import torch
-import argparse
-import os
 
 import open3d as o3d
 
@@ -60,142 +58,180 @@ name_to_rgb_molgrid = {
     "Boron": (153, 76, 0),
 }
 
-p = argparse.ArgumentParser(description="Visualize point cloud (PCD file) with Open3D")
-p.add_argument("sdf", type=str, help="SDF file")
-p.add_argument("-r", "--resolution", type=float, default=0.5, help="Grid resolution")
-p.add_argument(
-    "-d", "--dimension", type=float, default=23.5, help="Grid dimension (1D)"
-)
-p.add_argument(
-    "-m", "--ligmap", type=str, default="files/ligmap", help="Ligand types file"
-)
-p.add_argument(
-    "-o", "--output", type=str, default=None, help="Output file (.pcd, .xyzrgb, ...)"
-)
-p.add_argument("--dx", action="store_true", help="Output grids as DX files")
-p.add_argument("--ascii", action="store_true", help="Output file in ASCII format")
-p.add_argument("--sensaas", action="store_true", help="Use SENSAAS color scheme")
 
-args = p.parse_args()
+def mol_to_grid(mol, dimension, resolution, typer):
+    gm = molgrid.GridMaker(resolution=resolution, dimension=dimension)
 
-# Select color scheme to use
-if args.sensaas:
-    name_to_rgb = name_to_rgb_sensaas
-else:
-    name_to_rgb = name_to_rgb_molgrid
+    # Grid dimensions (including types)
+    gdims = gm.grid_dimensions(typer.num_types())
 
-system = os.path.splitext(os.path.basename(args.sdf))[0]
+    # Pre-allocate grid
+    # Only one example (batch size is 1)
+    grid = torch.zeros(1, *gdims, dtype=torch.float32, device=device)
 
-if args.output is None:
-    args.output = f"{system}.pcd"
+    # Add hydrogens to molecule
+    obmol.addh()
 
-resolution = args.resolution
-dimension = args.dimension
+    # Use OpenBabel molecule object (obmol.OBmol) instead of PyBel molecule (obmol)
+    cs = molgrid.CoordinateSet(obmol.OBMol, typer)
 
-gm = molgrid.GridMaker(resolution=resolution, dimension=dimension)
+    ex = molgrid.Example()
+    ex.coord_sets.append(cs)
 
-t = molgrid.FileMappedGninaTyper(args.ligmap)
+    c = ex.coord_sets[0].center()  # Only one coordinate set
 
-# Grid dimensions (including types)
-gdims = gm.grid_dimensions(t.num_types())
-
-# Pre-allocate grid
-# Only one example (batch size is 1)
-grid = torch.zeros(1, *gdims, dtype=torch.float32, device=device)
-
-obmol = next(pybel.readfile("sdf", args.sdf))
-obmol.addh()
-print(obmol, end="")
-
-# Use OpenBabel molecule object (obmol.OBmol) instead of PyBel molecule (obmol)
-cs = molgrid.CoordinateSet(obmol.OBMol, t)
-
-ex = molgrid.Example()
-ex.coord_sets.append(cs)
-
-c = ex.coord_sets[0].center()  # Only one coordinate set
-print("center:", tuple(c))
-
-# https://gnina.github.io/libmolgrid/python/index.html#the-transform-class
-transform = molgrid.Transform(
-    c, random_translate=0.0, random_rotation=False,  # float  # bool
-)
-transform.forward(ex, ex)
-
-# Compute grid
-gm.forward(ex, grid[0])
-
-print("grid.shape:", grid.shape)
-
-if args.dx:
-    # https://gnina.github.io/libmolgrid/python/index.html#molgrid.write_dx_grids
-    # Grid4f is different from Grid4fCUDA
-    # If a function takes Grid4f as input, torch.Tensor need to be moved to the CPU
-    molgrid.write_dx_grids(
-        f"grids/{system}",
-        t.get_type_names(),
-        grid[0].cpu(),
-        ex.coord_sets[0].center(),
-        0.5,
+    # https://gnina.github.io/libmolgrid/python/index.html#the-transform-class
+    transform = molgrid.Transform(
+        c, random_translate=0.0, random_rotation=False,  # float  # bool
     )
+    transform.forward(ex, ex)
 
-cloud = torch.logical_and(grid[0] >= 0.4, grid[0] <= 0.6)
+    # Compute grid
+    gm.forward(ex, grid[0])
+
+    return grid, c
 
 
-def grid_lims(c):
+def _grid_lims(o, L):
     """
-    Compute grid limits given coordinate of center.
+    Compute grid limits given grid length and grid origin.
     """
-    return c - dimension / 2.0, c + dimension / 2.0
+    return o - L / 2.0, o + L / 2.0
 
 
-# Number of voxels in one direction
-n_steps = round(dimension / resolution) + 1
+def grid_to_pcd(grid, center, dimension, resolution, typer):
 
-x1, x2 = grid_lims(c[0])
-x = torch.linspace(x1, x2, steps=n_steps)
+    cloud = torch.logical_and(grid[0] >= 0.4, grid[0] <= 0.6)
 
-y1, y2 = grid_lims(c[1])
-y = torch.linspace(y1, y2, steps=n_steps)
+    # Number of voxels in one direction
+    n_steps = round(dimension / resolution) + 1
 
-z1, z2 = grid_lims(c[2])
-z = torch.linspace(z1, z2, steps=n_steps)
+    x1, x2 = _grid_lims(center[0], dimension)
+    x = torch.linspace(x1, x2, steps=n_steps)
 
-X, Y, Z = torch.meshgrid(x, y, z)
+    y1, y2 = _grid_lims(center[1], dimension)
+    y = torch.linspace(y1, y2, steps=n_steps)
 
-# Total number of points in the cloud
-n_points = torch.sum(cloud)
+    z1, z2 = _grid_lims(center[2], dimension)
+    z = torch.linspace(z1, z2, steps=n_steps)
 
-XYZ = torch.empty(n_points, 3)
-RGB = torch.empty(n_points, 3)
+    X, Y, Z = torch.meshgrid(x, y, z)
 
-start = 0
-for i, name in enumerate(t.get_type_names()):
-    idx = cloud[i]  # Indices of cloud points
-    rgb = name_to_rgb[name]
+    # Total number of points in the cloud
+    n_points = torch.sum(cloud)
 
-    print(f"{name}: {round(torch.sum(idx).item())}")
+    XYZ = torch.empty(n_points, 3)
+    RGB = torch.empty(n_points, 3)
 
-    step = torch.sum(idx).item()
-    stop = start + step
+    start = 0
+    for i, name in enumerate(typer.get_type_names()):
+        idx = cloud[i]  # Indices of cloud points
+        rgb = name_to_rgb[name]
 
-    # print(start, stop, step)
-    XYZ[start:stop, 0] = X[idx].reshape((-1,))
-    XYZ[start:stop, 1] = Y[idx].reshape((-1,))
-    XYZ[start:stop, 2] = Z[idx].reshape((-1,))
-    RGB[start:stop, 0] = rgb[0]
-    RGB[start:stop, 1] = rgb[1]
-    RGB[start:stop, 2] = rgb[2]
+        # print(f"{name}: {round(torch.sum(idx).item())}")
 
-    start = stop
+        step = torch.sum(idx).item()
+        stop = start + step
 
-# Scale RGB values
-# RGB values needs to be in [0,1]
-RGB = RGB / 255
+        # print(start, stop, step)
+        XYZ[start:stop, 0] = X[idx].reshape((-1,))
+        XYZ[start:stop, 1] = Y[idx].reshape((-1,))
+        XYZ[start:stop, 2] = Z[idx].reshape((-1,))
+        RGB[start:stop, 0] = rgb[0]
+        RGB[start:stop, 1] = rgb[1]
+        RGB[start:stop, 2] = rgb[2]
 
-# Manually build point cloud object
-pcd = o3d.geometry.PointCloud()
-pcd.points = o3d.utility.Vector3dVector(XYZ.cpu().numpy())
-pcd.colors = o3d.utility.Vector3dVector(RGB.cpu().numpy())
+        start = stop
 
-o3d.io.write_point_cloud(args.output, pcd, write_ascii=args.ascii)
+    # Scale RGB values
+    # RGB values needs to be in [0,1]
+    RGB = RGB / 255
+
+    # Manually build point cloud object
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(XYZ.cpu().numpy())
+    pcd.colors = o3d.utility.Vector3dVector(RGB.cpu().numpy())
+
+    return pcd
+
+
+if __name__ == "__main__":
+    import argparse
+    import os
+
+    p = argparse.ArgumentParser(
+        description="Visualize point cloud (PCD file) with Open3D"
+    )
+    p.add_argument("sdf", type=str, help="SDF file")
+    p.add_argument(
+        "-r", "--resolution", type=float, default=0.5, help="Grid resolution"
+    )
+    p.add_argument(
+        "-d", "--dimension", type=float, default=23.5, help="Grid dimension (1D)"
+    )
+    p.add_argument(
+        "-m", "--ligmap", type=str, default="files/ligmap", help="Ligand types file"
+    )
+    p.add_argument(
+        "-o",
+        "--output",
+        type=str,
+        default=None,
+        help="Output file (.pcd, .xyzrgb, ...)",
+    )
+    p.add_argument("--dx", action="store_true", help="Output grids as DX files")
+    p.add_argument("--ascii", action="store_true", help="Output file in ASCII format")
+    p.add_argument("--sensaas", action="store_true", help="Use SENSAAS color scheme")
+    p.add_argument("-v", "--verbose", action="store_true", help="Verbose")
+
+    args = p.parse_args()
+
+    # Select color scheme to use
+    if args.sensaas:
+        name_to_rgb = name_to_rgb_sensaas
+    else:
+        name_to_rgb = name_to_rgb_molgrid
+
+    system = os.path.splitext(os.path.basename(args.sdf))[0]
+
+    if args.output is None:
+        args.output = f"{system}.pcd"
+
+    obmol = next(pybel.readfile("sdf", args.sdf))
+
+    if args.verbose:
+        print("molecule:\n\t", obmol, end="")
+
+    # limbolgrid typer
+    typer = molgrid.FileMappedGninaTyper(args.ligmap)
+
+    if args.verbose:
+        print("types:")
+        for t in typer.get_type_names():
+            print(f"\t{t}")
+
+    # Convert molecule into grid
+    grid, center = mol_to_grid(obmol, args.dimension, args.resolution, typer)
+
+    if args.verbose:
+        print("grid center:\n\t", tuple(center))
+        print("grid shape:\n\t", grid.shape)
+
+    # Output grids
+    if args.dx:
+        # https://gnina.github.io/libmolgrid/python/index.html#molgrid.write_dx_grids
+        # Grid4f is different from Grid4fCUDA
+        # If a function takes Grid4f as input, torch.Tensor need to be moved to the CPU
+        molgrid.write_dx_grids(
+            prefix=f"grids/{system}",
+            names=typer.get_type_names(),
+            grid=grid[0].cpu(),
+            center=center,
+            resolution=args.resolution,
+            scale=1.0,
+        )
+
+    # Convert grid to point cloud
+    pcd = grid_to_pcd(grid, center, args.dimension, args.resolution, typer)
+
+    o3d.io.write_point_cloud(args.output, pcd, write_ascii=args.ascii)

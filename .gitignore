@@ -1,2 +1,5 @@
 # Singularity
 *.sif
+
+# Files
+tests/ligands/*/*.pcd

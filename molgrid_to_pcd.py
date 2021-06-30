@@ -1,6 +1,7 @@
 import molgrid
 import torch
 
+import numpy as np
 import open3d as o3d
 
 from openbabel import pybel
@@ -59,7 +60,7 @@ name_to_rgb_molgrid = {
 }
 
 
-def mol_to_grid(mol, dimension, resolution, typer):
+def mol_to_grid(obmol, dimension, resolution, typer):
     gm = molgrid.GridMaker(resolution=resolution, dimension=dimension)
 
     # Grid dimensions (including types)
@@ -72,8 +73,27 @@ def mol_to_grid(mol, dimension, resolution, typer):
     # Add hydrogens to molecule
     obmol.addh()
 
-    # Use OpenBabel molecule object (obmol.OBmol) instead of PyBel molecule (obmol)
-    cs = molgrid.CoordinateSet(obmol.OBMol, typer)
+    # This can cause a MemoryError
+    # See https://github.com/gnina/libmolgrid/issues/62
+    cs = molgrid.CoordinateSet(obmol, typer)
+
+    # Manually build a CoordinateSet from obmol and typer
+    # This also causes a MemoryError
+    # See https://github.com/gnina/libmolgrid/issues/62
+    #n_atoms = len(obmol.atoms)
+    #coords = torch.zeros((n_atoms, 3))
+    #types = torch.zeros(n_atoms)
+    #radii = torch.zeros(n_atoms)
+    #for i, atom in enumerate(obmol):
+    #    t = typer.get_atom_type_index(atom)
+    #    if t[0] >= 0:
+    #        coords[i,0] = atom.coords[0]
+    #        coords[i,1] = atom.coords[1]
+    #        coords[i,2] = atom.coords[2]
+
+    #        types[i] = t[0]
+    #        radii[i] = t[1]
+    cs = molgrid.CoordinateSet(molgrid.Grid2f(coords), molgrid.Grid1f(types), molgrid.Grid1f(radii), typer.num_types())
 
     ex = molgrid.Example()
     ex.coord_sets.append(cs)
@@ -99,7 +119,7 @@ def _grid_lims(o, L):
     return o - L / 2.0, o + L / 2.0
 
 
-def grid_to_pcd(grid, center, dimension, resolution, typer):
+def grid_to_pcd(grid, center, dimension, resolution, typer, color_map=name_to_rgb_molgrid):
 
     cloud = torch.logical_and(grid[0] >= 0.4, grid[0] <= 0.6)
 
@@ -126,7 +146,7 @@ def grid_to_pcd(grid, center, dimension, resolution, typer):
     start = 0
     for i, name in enumerate(typer.get_type_names()):
         idx = cloud[i]  # Indices of cloud points
-        rgb = name_to_rgb[name]
+        rgb = color_map[name]
 
         # print(f"{name}: {round(torch.sum(idx).item())}")
 
@@ -186,12 +206,6 @@ if __name__ == "__main__":
 
     args = p.parse_args()
 
-    # Select color scheme to use
-    if args.sensaas:
-        name_to_rgb = name_to_rgb_sensaas
-    else:
-        name_to_rgb = name_to_rgb_molgrid
-
     system = os.path.splitext(os.path.basename(args.sdf))[0]
 
     if args.output is None:
@@ -232,6 +246,6 @@ if __name__ == "__main__":
         )
 
     # Convert grid to point cloud
-    pcd = grid_to_pcd(grid, center, args.dimension, args.resolution, typer)
+    pcd = grid_to_pcd(grid, center, args.dimension, args.resolution, typer, color_map=name_to_rgb_sensaas if args.sensaas else name_to_rgb_molgrid)
 
     o3d.io.write_point_cloud(args.output, pcd, write_ascii=args.ascii)

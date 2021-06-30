@@ -1,10 +1,13 @@
 #!/bin/bash
 
 
-for sdf in $(ls ligands/BRD4/*.sdf)
+for ligand in "CDK2"
 do
-    fout="${sdf%.*}.pcd"
+    for sdf in $(ls ligands/${ligand}/*.sdf)
+    do
+        fout="${sdf%.*}.pcd"
 
-    singularity run --nv --app python ../containers/densitymatch.sif \
-        ../molgrid_to_pcd.py ${sdf} -m ../files/ligmap -r 0.5 -o ${fout} -v
+        singularity run --nv --app python ../containers/densitymatch.sif \
+            ../molgrid_to_pcd.py ${sdf} -m ../files/ligmap -r 0.5 -o ${fout} -v
+    done
 done

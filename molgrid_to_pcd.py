@@ -93,7 +93,7 @@ def mol_to_grid(obmol, dimension, resolution, typer):
 
     #        types[i] = t[0]
     #        radii[i] = t[1]
-    cs = molgrid.CoordinateSet(molgrid.Grid2f(coords), molgrid.Grid1f(types), molgrid.Grid1f(radii), typer.num_types())
+    #cs = molgrid.CoordinateSet(molgrid.Grid2f(coords), molgrid.Grid1f(types), molgrid.Grid1f(radii), typer.num_types())
 
     ex = molgrid.Example()
     ex.coord_sets.append(cs)

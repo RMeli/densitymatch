@@ -3,6 +3,7 @@
 
 # Files
 tests/ligands/*/*.pcd
+tests/ligands/*/conf_*.sdf
 
 # Python
 __pycache__

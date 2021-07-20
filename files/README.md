@@ -6,3 +6,4 @@ The following files have been taken from [SENSAAS](https://github.com/SENSAAS/se
 
 * `imatinib.sdf`: originally `IMATINIB.sdf`
 * `imatinib_moved.sdf`: originally `IMATINIB_mv.sdf`
+* `imatinib_part.sdf`: firs molecule in `IMATINIB_parts.sdf`

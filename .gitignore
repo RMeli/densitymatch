@@ -2,6 +2,7 @@
 *.sif
 
 # Files
+tests/ligands/*.pcd
 tests/ligands/*/*.pcd
 tests/ligands/*/conf_*.sdf
 

@@ -76,11 +76,18 @@ def fit_and_score(pcds, voxel_size, threshold):
         pcds[0], pcds[1], threshold, cresult.transformation
     )
 
-    return gfit, cfit
+    # The 4x4 transformation matrix represents and affine transformation:
+    #   r00 r01 r02 t0
+    #   r10 r11 r12 t1
+    #   r20 r21 r22 t2
+    #   0   0   0   1
+
+    return gfit, cfit, cresult.transformation
 
 
 if __name__ == "__main__":
     import argparse
+    import os
 
     p = argparse.ArgumentParser(description="Optimise and score point clouds")
     p.add_argument("pcd1", type=str, help="Point cloud 1")
@@ -93,13 +100,20 @@ if __name__ == "__main__":
 
     args = p.parse_args()
 
+    # Check files exist
+    for f in [args.pcd1, args.pcd2]:
+        if not os.path.exists(f):
+            raise FileNotFoundError(f"File {f} not found.")
+
     # Point clouds
     pcds = [o3d.io.read_point_cloud(args.pcd1), o3d.io.read_point_cloud(args.pcd2)]
 
-    gfit, cfit = fit_and_score(
+    gfit, cfit, transformation = fit_and_score(
         pcds, voxel_size=args.resolution, threshold=args.threshold
     )
 
     if args.verbose:
-        print(f"GLOBAL | Fitness: {gfit.fitness:.3f} | RMSE: {gfit.inlier_rmse:.3f}")
-        print(f"COLORED | Fitness: {cfit.fitness:.3f} | RMSE: {cfit.inlier_rmse:.3f}")
+        print(f"Transformation:\n{transformation}")
+
+    print(f"GLOBAL | Fitness: {gfit.fitness:.3f} | RMSE: {gfit.inlier_rmse:.3f}")
+    print(f"COLORED | Fitness: {cfit.fitness:.3f} | RMSE: {cfit.inlier_rmse:.3f}")

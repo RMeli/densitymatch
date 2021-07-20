@@ -1,6 +1,6 @@
 # Density Match
 
-Match [libmolgrid]()-generated densities using [sensaas]().
+Match [libmolgrid](https://github.com/gnina/libmolgrid)-generated densities using [sensaas](https://github.com/SENSAAS/sensaas).
 
 ## Tools
 

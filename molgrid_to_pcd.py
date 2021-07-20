@@ -1,3 +1,8 @@
+"""
+Convert molecule into point cloud using an isosurface of libmolgrid-computed
+atomic densities.
+"""
+
 import molgrid
 import torch
 
@@ -37,6 +42,7 @@ name_to_rgb_sensaas = defaultdict(
     },
 )
 
+# TODO: Change color scheme to account for all atom types?
 name_to_rgb_molgrid = {
     "AliphaticCarbonXSHydrophobe": (96, 96, 96),
     "AliphaticCarbonXSNonHydrophobe": (96, 96, 96),
@@ -77,32 +83,16 @@ def mol_to_grid(obmol, dimension, resolution, typer):
     # See https://github.com/gnina/libmolgrid/issues/62
     cs = molgrid.CoordinateSet(obmol, typer)
 
-    # Manually build a CoordinateSet from obmol and typer
-    # This also causes a MemoryError
-    # See https://github.com/gnina/libmolgrid/issues/62
-    #n_atoms = len(obmol.atoms)
-    #coords = torch.zeros((n_atoms, 3))
-    #types = torch.zeros(n_atoms)
-    #radii = torch.zeros(n_atoms)
-    #for i, atom in enumerate(obmol):
-    #    t = typer.get_atom_type_index(atom)
-    #    if t[0] >= 0:
-    #        coords[i,0] = atom.coords[0]
-    #        coords[i,1] = atom.coords[1]
-    #        coords[i,2] = atom.coords[2]
-
-    #        types[i] = t[0]
-    #        radii[i] = t[1]
-    #cs = molgrid.CoordinateSet(molgrid.Grid2f(coords), molgrid.Grid1f(types), molgrid.Grid1f(radii), typer.num_types())
-
+    # Create example
     ex = molgrid.Example()
     ex.coord_sets.append(cs)
 
+    # Compute center
     c = ex.coord_sets[0].center()  # Only one coordinate set
 
     # https://gnina.github.io/libmolgrid/python/index.html#the-transform-class
     transform = molgrid.Transform(
-        c, random_translate=0.0, random_rotation=False,  # float  # bool
+        c, random_translate=0.0, random_rotation=False,
     )
     transform.forward(ex, ex)
 

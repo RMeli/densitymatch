@@ -8,3 +8,6 @@ tests/ligands/*/conf_*.sdf
 # Python
 __pycache__
 .ipynb_checkpoints
+
+# editors
+.vscode

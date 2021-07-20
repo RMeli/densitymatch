@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-for ligand in "CDK2"
+for ligand in "BRD4" "CDK2"
 do
     for sdf in $(ls ligands/${ligand}/*.sdf)
     do

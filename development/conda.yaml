@@ -18,6 +18,7 @@ dependencies:
 
   - rdkit
   - openbabel
+  - spyrmsd
 
   - cudatoolkit=11.1
   - pytorch

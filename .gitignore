@@ -5,6 +5,7 @@
 tests/ligands/*.pcd
 tests/ligands/*/*.pcd
 tests/ligands/*/conf_*.sdf
+tests/ligands/*/frag_*_*.sdf
 
 # Python
 __pycache__

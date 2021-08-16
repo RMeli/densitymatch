@@ -7,3 +7,6 @@ rm ligands/*/allfrags.sdf
 rm catsensaas.sdf
 rm bestsensaas.sdf
 rm matrix-sensaas.txt
+rm tran.txt
+rm tmp*.sdf
+rm slog

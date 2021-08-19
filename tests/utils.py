@@ -32,6 +32,10 @@ class AlignShow:
         # Cache for aligned molecules
         self.scores = {}
 
+        # Set conformers ID to match molecule id
+        for idx, mol in enumerate(self.mols):
+            # Default conformer has ID 0
+            mol.GetConformer().SetId(idx)
 
     def align(self, idx1, idx2):
         """
@@ -51,7 +55,9 @@ class AlignShow:
         fit, cfit, tran = fit_and_score((pcd1, pcd2), voxel_size=0.5, threshold=0.5)
 
         # Get coordinates to transform
-        coords = mol1.GetConformer(0).GetPositions()
+        # Conformer index corresponds to the molecule index
+        # This has been modified in the constructor
+        coords = mol1.GetConformer(idx1).GetPositions()
 
         # Augment coordinates with ones
         coords_aug = np.ones((coords.shape[0], 4))
@@ -63,10 +69,12 @@ class AlignShow:
         # Add new coordinates as conformer
         n_atoms = mol1.GetNumAtoms()
         conf = Chem.Conformer(n_atoms)
+        conf.SetId(idx2) # mols[idx1] is aligned to mols[idx2]
         for i in range(n_atoms):
             conf.SetAtomPosition(i, coords_new[i,:])
 
-        _ = mol1.AddConformer(conf, assignId=True)
+        # Conformer ID manually assigned ambve, avoid automatic assignement here
+        _ = mol1.AddConformer(conf, assignId=False)
 
         # Cache scores
         self.scores[(idx1, idx2)] = cfit.fitness
@@ -87,9 +95,12 @@ class AlignShow:
 
         # Create view
         p = py3Dmol.view()
-        p.addModel(Chem.MolToMolBlock(mol1, confId=0),'sdf')
-        p.addModel(Chem.MolToMolBlock(mol1, confId=1),'sdf')
-        p.addModel(Chem.MolToMolBlock(mol2, confId=0),'sdf')
+
+        # Select correct conformers
+        # mols[idx1] is aligned to mols[idx1]
+        p.addModel(Chem.MolToMolBlock(mol1, confId=idx1),'sdf')
+        p.addModel(Chem.MolToMolBlock(mol1, confId=idx2),'sdf') # mol1 aligned to mols[idx2]
+        p.addModel(Chem.MolToMolBlock(mol2, confId=idx2),'sdf')
 
         p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
         p.setStyle({"model": 1}, {'stick':{'colorscheme':'redCarbon'}})

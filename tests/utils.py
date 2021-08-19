@@ -34,7 +34,6 @@ class AlignShow:
 
         # Set conformers ID to match molecule id
         for idx, mol in enumerate(self.mols):
-            # Default conformer has ID 0
             mol.GetConformer().SetId(idx)
 
     def align(self, idx1, idx2):
@@ -67,13 +66,14 @@ class AlignShow:
         coords_new = np.matmul(tran, coords_aug.T)[:3,:].T
 
         # Add new coordinates as conformer
+        # Set conformer index to the index of the molecule it is being aligned to
         n_atoms = mol1.GetNumAtoms()
         conf = Chem.Conformer(n_atoms)
         conf.SetId(idx2) # mols[idx1] is aligned to mols[idx2]
         for i in range(n_atoms):
             conf.SetAtomPosition(i, coords_new[i,:])
 
-        # Conformer ID manually assigned ambve, avoid automatic assignement here
+        # Conformer ID manually assigned above, avoid automatic assignement here
         _ = mol1.AddConformer(conf, assignId=False)
 
         # Cache scores

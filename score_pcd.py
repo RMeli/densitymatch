@@ -103,7 +103,7 @@ def fit_and_score(pcds, voxel_size, threshold):
         pcds[0],
         pcds[1],
         max_correspondence_distance=radius_normal,
-        init=gresult.transformation,
+        init=gresult.transformation, # Can this be None?
         estimation_method=o3d.pipelines.registration.TransformationEstimationForColoredICP(
             lambda_geometric=0.8
         ),
@@ -111,6 +111,8 @@ def fit_and_score(pcds, voxel_size, threshold):
             relative_fitness=1e-6, relative_rmse=1e-6, max_iteration=100
         ),
     )
+
+
 
     cfit = o3d.pipelines.registration.evaluate_registration(
         pcds[0], pcds[1], threshold, cresult.transformation

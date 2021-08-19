@@ -6,8 +6,8 @@ tests/ligands/*.pcd
 tests/ligands/*/*.pcd
 tests/ligands/*/conf_*.sdf
 tests/ligands/*/frag_*_*.sdf
-test/ligands/*/allfrags.sdf
-tests/nestsensaas.sdf
+tests/ligands/*/allfrags.sdf
+tests/bestsensaas.sdf
 tests/catsensaas.sdf
 tests/matrix-sensaas.txt
 

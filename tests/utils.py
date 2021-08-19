@@ -16,6 +16,11 @@ from rdkit import Chem
 from rdkit.Chem import AllChem
 
 class AlignShow:
+    """
+    Align molecules pairs within a list.
+
+    Store scroes and aligned conformers for visualisation (cached).
+    """
 
     def __init__(self, mols, pcds):
         """
@@ -111,6 +116,9 @@ class AlignShow:
         return p
 
 def show_molecule_idx(idx, mols):
+    """
+    Draw a particular molecule from a list.
+    """
     p = py3Dmol.view()
     p.addModel(Chem.MolToMolBlock(mols[idx], confId=0), 'sdf')
     p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})

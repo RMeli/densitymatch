@@ -6,6 +6,8 @@ from scipy.spatial.transform import Rotation as R
 import argparse
 import os
 
+from utils import transform_and_add_conformer
+
 p = argparse.ArgumentParser(description="Optimise and score point clouds")
 p.add_argument("mols", type=str, nargs="+", help="Molecules")
 p.add_argument("-s", "--suffix", default="tran", type=str, help="Output suffix")
@@ -31,26 +33,8 @@ for fmol in args.mols:
     A[:3,:3] = r.as_matrix()
     A[:3,3] = t
     A[3,3] = 1
-    #print(A)
-
-    # Get coordinates to transform
-    coords = mol.GetConformer(0).GetPositions()
-
-    # Augment coordinates with ones
-    coords_aug = np.ones((coords.shape[0], 4))
-    coords_aug[:,:3] = coords
-
-    # Compute new (transformed) coordinates
-    coords_new = np.matmul(A, coords_aug.T)[:3,:].T
-
-    # Add new coordinates as conformer
-    n_atoms = mol.GetNumAtoms()
-    conf = Chem.Conformer(n_atoms)
-    for i in range(n_atoms):
-        conf.SetAtomPosition(i, coords_new[i,:])
-
-    # Add conformer
-    _ = mol.AddConformer(conf, assignId=True)
+    
+    transform_and_add_conformer(mol, A)
 
     fname, ext = os.path.splitext(fmol)
     outfname = f"{fname}_{args.suffix}{ext}"

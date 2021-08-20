@@ -133,7 +133,7 @@ class AlignShow:
         assert 0 <= idx2 < self.n
 
         if not (idx1, idx2) in self.scores:
-            self._align(idx1, idx2)
+            self.align(idx1, idx2)
 
         mol1, mol2 = self.mols[idx1], self.mols[idx2]
 

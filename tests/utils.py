@@ -10,10 +10,17 @@ sys.path.append("..")
 from score_pcd import fit_and_score
 
 import numpy as np
+from numpy.random import default_rng
+from scipy.spatial.transform import Rotation as R
+
+# FIXME: Define elsewhere? Allow to control the seed?
+rng = default_rng(42)
 
 import py3Dmol
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Chem import rdMolTransforms
+
 
 def transform_and_add_conformer(mol, tran, fromConfId=0, toConfId=1) -> None:
     """
@@ -154,6 +161,71 @@ class AlignShow:
 
         return p
 
+def translate_and_rotate(mol, u=None, t=None, confId=0):
+    if u is None: # Random rotation
+        # Random (normalised) axis of rotation
+        u = rng.uniform(size=3)
+        u /= np.linalg.norm(u)
+
+        # Random angle of rotation
+        a = rng.uniform(low=0, high=2*np.pi)
+
+        # Define rotation
+        # Rotation
+        r = R.from_rotvec(u * a)
+    else:
+        # Define rotation from unput u
+        r = R.from_rotvec(u)
+
+    if t is None: # Random translation
+        t = rng.uniform(low=-1, high=1, size=3)
+    
+    # Affine tranformation
+    A = np.zeros((4,4))
+    A[:3,:3] = r.as_matrix()
+    A[:3,3] = t
+    A[3,3] = 1
+    
+    # Apply affine transformation to conformer
+    rdMolTransforms.TransformConformer(mol.GetConformer(confId), A)
+
+def cut_mol_on_single_bonds(mol):
+    """
+    Cut molecule over single bonds not in rings and return fragments.
+
+    Original source:
+        Project: guacamol_baselines
+        Author: BenevolentAI
+        File: crossover.py
+        License: MIT License
+    """
+    if not mol.HasSubstructMatch(Chem.MolFromSmarts('[*]-;!@[*]')):
+        return None
+
+    # List of atom pairs matching SMARTS pattern
+    bis = mol.GetSubstructMatches(Chem.MolFromSmarts('[*]-;!@[*]'))  # single bond not in ring
+
+    fragments = []
+    for b in bis:
+        # Bond between atom pair
+        bs = [mol.GetBondBetweenAtoms(b[0], b[1]).GetIdx()]
+
+        #f = Chem.FragmentOnBonds(mol, bs, addDummies=True, dummyLabels=[(1, 1)])
+        f = Chem.FragmentOnBonds(mol, bs, addDummies=False, dummyLabels=[(1, 1)])
+
+        try:
+            # Pair of fragments
+            mols = Chem.GetMolFrags(f, asMols=True, sanitizeFrags=True)
+
+            # Look for fragments bigger than one heteroatom
+            if mols[0].GetNumHeavyAtoms() > 1 and mols[1].GetNumHeavyAtoms() > 1:
+                fragments.append(mols)
+        except ValueError:
+            fragments.appen(None)
+
+    return fragments
+
+
 def show_molecule_idx(idx, mols):
     """
     Draw a particular molecule from a list.
@@ -184,5 +256,17 @@ def show_all_conformers(mol):
         mb = Chem.MolToMolBlock(mol, confId=i)
         p.addModel(mb, 'sdf')
         p.setStyle({"model": i}, {'stick':{'colorscheme':'lightgreyCarbon'}})
+    p.zoomTo()
+    p.show()
+
+def show_two_mols(mol1, mol2):
+    """
+    Draw two molecules.
+    """
+    p = py3Dmol.view()
+    p.addModel(Chem.MolToMolBlock(mol1), 'sdf')
+    p.addModel(Chem.MolToMolBlock(mol2), 'sdf')
+    p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
+    p.setStyle({"model": 1}, {'stick':{'colorscheme':'redCarbon'}})
     p.zoomTo()
     p.show()

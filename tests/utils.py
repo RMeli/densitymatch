@@ -163,3 +163,26 @@ def show_molecule_idx(idx, mols):
     p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
     p.zoomTo()
     p.show()
+
+
+def show_conformer_idx(idx, mol):
+    """
+    Draw a conformer from a molecule.
+    """
+    p = py3Dmol.view()
+    p.addModel(Chem.MolToMolBlock(mol, confId=idx), 'sdf')
+    p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
+    p.zoomTo()
+    p.show()
+
+def show_all_conformers(mol):
+    """
+    Draw all conformers for a molecule.
+    """
+    p = py3Dmol.view()
+    for i in range(mol.GetNumConformers()):
+        mb = Chem.MolToMolBlock(mol, confId=i)
+        p.addModel(mb, 'sdf')
+        p.setStyle({"model": i}, {'stick':{'colorscheme':'lightgreyCarbon'}})
+    p.zoomTo()
+    p.show()

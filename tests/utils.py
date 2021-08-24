@@ -91,6 +91,8 @@ class AlignShow:
         for idx, mol in enumerate(self.mols):
             mol.GetConformer().SetId(idx)
 
+        self.all_aligned = False
+
     def align(self, idx1, idx2):
         """
         Align two molecules based on their PCD representation.
@@ -160,6 +162,61 @@ class AlignShow:
         p.zoomTo()
 
         return p
+
+    def _align_all(self):
+        """
+        Align all molecules.
+        """
+        for i in range(self.n):
+            for j in range(self.n):
+                self.align(i, j)
+
+        self.all_aligned = True
+
+    def best(self):
+        """
+        Indices of the best alignment (according to score).
+        """
+        if not self.all_aligned:
+            self._align_all()
+
+        # FIXME: Find better way of eliminating self-alignment
+        # The following is faster and more Pythonic, but includes self-alignment
+        # max(self.scores, key=self.scores.get)
+        best, best_idxs = -1, (-1, -1)
+        for i in range(self.n):
+            for j in  range(self.n):
+                if i == j:
+                    continue
+                
+                s = self.scores[(i, j)]
+                if s > best:
+                    best = s
+                    best_idxs = (i, j)
+
+        return best, best_idxs
+
+    def best_with(self, idx):
+        """
+        Best alginment with molecule.
+        """
+        # TODO" Only align with molecule IDX?
+        if not self.all_aligned:
+            self._align_all()
+
+        best, best_idxs = -1, (-1, -1)
+        for j in range(self.n):
+            if j == idx:
+                continue
+            
+            s = self.scores[(idx, j)]
+            if s > best:
+                best = s
+                best_idxs = (idx, j)
+
+        return best, best_idxs
+
+
 
 def translate_and_rotate(mol, u=None, t=None, confId=0):
     if u is None: # Random rotation

@@ -29,11 +29,11 @@ for fmol in args.mols:
     r = R.from_rotvec(angle * e)
 
     # Define affine transformation matrix
-    A = np.zeros((4,4))
-    A[:3,:3] = r.as_matrix()
-    A[:3,3] = t
-    A[3,3] = 1
-    
+    A = np.zeros((4, 4))
+    A[:3, :3] = r.as_matrix()
+    A[:3, 3] = t
+    A[3, 3] = 1
+
     transform_and_add_conformer(mol, A)
 
     fname, ext = os.path.splitext(fmol)

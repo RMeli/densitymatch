@@ -17,6 +17,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
+
 def grid_diff(mol1, mol2, dimension, resolution, typer, c=None):
     """
     Compute density difference between two molecules.
@@ -52,14 +53,10 @@ if __name__ == "__main__":
         "-m", "--ligmap", type=str, default="files/ligmap", help="Ligand types file"
     )
     p.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        default="diff.pcd",
-        help="Output file",
+        "-o", "--output", type=str, default="diff.pcd", help="Output file",
     )
     p.add_argument("--dx", action="store_true", help="Output grids as DX files")
-    #p.add_argument("-v", "--verbose", action="store_true", help="Verbose")
+    # p.add_argument("-v", "--verbose", action="store_true", help="Verbose")
 
     args = p.parse_args()
 
@@ -86,6 +83,6 @@ if __name__ == "__main__":
             resolution=args.resolution,
         )
 
-   # Convert grid to point cloud
+    # Convert grid to point cloud
     pcd = grid_to_pcd(diff, c, args.dimension, args.resolution, typer)
     o3d.io.write_point_cloud(args.output, pcd, write_ascii=False)

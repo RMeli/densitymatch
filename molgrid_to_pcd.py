@@ -92,9 +92,7 @@ def mol_to_grid(obmol, dimension, resolution, typer, c=None):
         c = ex.coord_sets[0].center()  # Only one coordinate set
 
     # https://gnina.github.io/libmolgrid/python/index.html#the-transform-class
-    transform = molgrid.Transform(
-        c, random_translate=0.0, random_rotation=False,
-    )
+    transform = molgrid.Transform(c, random_translate=0.0, random_rotation=False,)
     transform.forward(ex, ex)
 
     # Compute grid
@@ -110,7 +108,9 @@ def _grid_lims(o, L):
     return o - L / 2.0, o + L / 2.0
 
 
-def grid_to_pcd(grid, center, dimension, resolution, typer, color_map=name_to_rgb_molgrid):
+def grid_to_pcd(
+    grid, center, dimension, resolution, typer, color_map=name_to_rgb_molgrid
+):
 
     cloud = torch.logical_and(grid[0] >= 0.4, grid[0] <= 0.6)
 
@@ -237,6 +237,13 @@ if __name__ == "__main__":
         )
 
     # Convert grid to point cloud
-    pcd = grid_to_pcd(grid, center, args.dimension, args.resolution, typer, color_map=name_to_rgb_sensaas if args.sensaas else name_to_rgb_molgrid)
+    pcd = grid_to_pcd(
+        grid,
+        center,
+        args.dimension,
+        args.resolution,
+        typer,
+        color_map=name_to_rgb_sensaas if args.sensaas else name_to_rgb_molgrid,
+    )
 
     o3d.io.write_point_cloud(args.output, pcd, write_ascii=args.ascii)

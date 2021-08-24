@@ -5,6 +5,7 @@ Utility functions originally written in Jupyter Notebooks.
 # FIXME: Package things properly
 # Allow to import scripts in root directory
 import sys
+
 sys.path.append("..")
 
 from score_pcd import fit_and_score
@@ -42,10 +43,10 @@ def transform_and_add_conformer(mol, tran, fromConfId=0, toConfId=1) -> None:
 
     # Augment coordinates with ones
     coords_aug = np.ones((coords.shape[0], 4))
-    coords_aug[:,:3] = coords
+    coords_aug[:, :3] = coords
 
     # Compute new (transformed) coordinates
-    coords_new = np.matmul(tran, coords_aug.T)[:3,:].T
+    coords_new = np.matmul(tran, coords_aug.T)[:3, :].T
 
     # Add new coordinates as conformer
     # Set new conformer index to toConfId
@@ -53,10 +54,11 @@ def transform_and_add_conformer(mol, tran, fromConfId=0, toConfId=1) -> None:
     conf = Chem.Conformer(n_atoms)
     conf.SetId(toConfId)
     for i in range(n_atoms):
-        conf.SetAtomPosition(i, coords_new[i,:])
+        conf.SetAtomPosition(i, coords_new[i, :])
 
     # Conformer ID manually assigned above, avoid automatic assignement here
     _ = mol.AddConformer(conf, assignId=False)
+
 
 class AlignShow:
     """
@@ -114,7 +116,7 @@ class AlignShow:
 
         pcd1, pcd2 = self.pcds[idx1], self.pcds[idx2]
         mol1, mol2 = self.mols[idx1], self.mols[idx2]
-    
+
         fit, cfit, tran = fit_and_score((pcd1, pcd2), voxel_size=0.5, threshold=0.5)
 
         # Transform coordinates of mol1 (conformer idx1)
@@ -151,13 +153,19 @@ class AlignShow:
 
         # Select correct conformers
         # mols[idx1] is aligned to mols[idx1]
-        p.addModel(Chem.MolToMolBlock(mol1, confId=idx1),'sdf') # mol1 original coordinates
-        p.addModel(Chem.MolToMolBlock(mol1, confId=idx2),'sdf') # mol1 aligned to mols[idx2]
-        p.addModel(Chem.MolToMolBlock(mol2, confId=idx2),'sdf') # mol2 original coordinates
+        p.addModel(
+            Chem.MolToMolBlock(mol1, confId=idx1), "sdf"
+        )  # mol1 original coordinates
+        p.addModel(
+            Chem.MolToMolBlock(mol1, confId=idx2), "sdf"
+        )  # mol1 aligned to mols[idx2]
+        p.addModel(
+            Chem.MolToMolBlock(mol2, confId=idx2), "sdf"
+        )  # mol2 original coordinates
 
-        p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
-        p.setStyle({"model": 1}, {'stick':{'colorscheme':'redCarbon'}})
-        p.setStyle({"model": 2}, {'stick':{'colorscheme':'greyCarbon'}})
+        p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
+        p.setStyle({"model": 1}, {"stick": {"colorscheme": "redCarbon"}})
+        p.setStyle({"model": 2}, {"stick": {"colorscheme": "greyCarbon"}})
 
         p.zoomTo()
 
@@ -185,10 +193,10 @@ class AlignShow:
         # max(self.scores, key=self.scores.get)
         best, best_idxs = -1, (-1, -1)
         for i in range(self.n):
-            for j in  range(self.n):
+            for j in range(self.n):
                 if i == j:
                     continue
-                
+
                 s = self.scores[(i, j)]
                 if s > best:
                     best = s
@@ -208,7 +216,7 @@ class AlignShow:
         for j in range(self.n):
             if j == idx:
                 continue
-            
+
             s = self.scores[(idx, j)]
             if s > best:
                 best = s
@@ -221,26 +229,25 @@ class AlignShow:
         Show best alignment (according to score)
         """
         _, (i, j) = self.best()
-        return self.show(i,j)
+        return self.show(i, j)
 
     def save(self, i, j, outfile=None):
         if outfile is None:
             outfile = f"alignment_{i}_{j}.sdf"
 
         with Chem.SDWriter(outfile) as w:
-            w.write(self.mols[i], confId=j) # Molecule i aligned to molecule j
-            w.write(self.mols[j], confId=j) # Molecule j
-
+            w.write(self.mols[i], confId=j)  # Molecule i aligned to molecule j
+            w.write(self.mols[j], confId=j)  # Molecule j
 
 
 def translate_and_rotate(mol, u=None, t=None, confId=0):
-    if u is None: # Random rotation
+    if u is None:  # Random rotation
         # Random (normalised) axis of rotation
         u = rng.uniform(size=3)
         u /= np.linalg.norm(u)
 
         # Random angle of rotation
-        a = rng.uniform(low=0, high=2*np.pi)
+        a = rng.uniform(low=0, high=2 * np.pi)
 
         # Define rotation
         # Rotation
@@ -249,17 +256,18 @@ def translate_and_rotate(mol, u=None, t=None, confId=0):
         # Define rotation from unput u
         r = R.from_rotvec(u)
 
-    if t is None: # Random translation
+    if t is None:  # Random translation
         t = rng.uniform(low=-1, high=1, size=3)
-    
+
     # Affine tranformation
-    A = np.zeros((4,4))
-    A[:3,:3] = r.as_matrix()
-    A[:3,3] = t
-    A[3,3] = 1
-    
+    A = np.zeros((4, 4))
+    A[:3, :3] = r.as_matrix()
+    A[:3, 3] = t
+    A[3, 3] = 1
+
     # Apply affine transformation to conformer
     rdMolTransforms.TransformConformer(mol.GetConformer(confId), A)
+
 
 def cut_mol_on_single_bonds(mol):
     """
@@ -271,18 +279,20 @@ def cut_mol_on_single_bonds(mol):
         File: crossover.py
         License: MIT License
     """
-    if not mol.HasSubstructMatch(Chem.MolFromSmarts('[*]-;!@[*]')):
+    if not mol.HasSubstructMatch(Chem.MolFromSmarts("[*]-;!@[*]")):
         return None
 
     # List of atom pairs matching SMARTS pattern
-    bis = mol.GetSubstructMatches(Chem.MolFromSmarts('[*]-;!@[*]'))  # single bond not in ring
+    bis = mol.GetSubstructMatches(
+        Chem.MolFromSmarts("[*]-;!@[*]")
+    )  # single bond not in ring
 
     fragments = []
     for b in bis:
         # Bond between atom pair
         bs = [mol.GetBondBetweenAtoms(b[0], b[1]).GetIdx()]
 
-        #f = Chem.FragmentOnBonds(mol, bs, addDummies=True, dummyLabels=[(1, 1)])
+        # f = Chem.FragmentOnBonds(mol, bs, addDummies=True, dummyLabels=[(1, 1)])
         f = Chem.FragmentOnBonds(mol, bs, addDummies=False, dummyLabels=[(1, 1)])
 
         try:
@@ -303,8 +313,8 @@ def show_molecule_idx(idx, mols):
     Draw a particular molecule from a list.
     """
     p = py3Dmol.view()
-    p.addModel(Chem.MolToMolBlock(mols[idx], confId=0), 'sdf')
-    p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
+    p.addModel(Chem.MolToMolBlock(mols[idx], confId=0), "sdf")
+    p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
     p.zoomTo()
     p.show()
 
@@ -314,10 +324,11 @@ def show_conformer_idx(idx, mol):
     Draw a conformer from a molecule.
     """
     p = py3Dmol.view()
-    p.addModel(Chem.MolToMolBlock(mol, confId=idx), 'sdf')
-    p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
+    p.addModel(Chem.MolToMolBlock(mol, confId=idx), "sdf")
+    p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
     p.zoomTo()
     p.show()
+
 
 def show_all_conformers(mol):
     """
@@ -326,19 +337,20 @@ def show_all_conformers(mol):
     p = py3Dmol.view()
     for i in range(mol.GetNumConformers()):
         mb = Chem.MolToMolBlock(mol, confId=i)
-        p.addModel(mb, 'sdf')
-        p.setStyle({"model": i}, {'stick':{'colorscheme':'lightgreyCarbon'}})
+        p.addModel(mb, "sdf")
+        p.setStyle({"model": i}, {"stick": {"colorscheme": "lightgreyCarbon"}})
     p.zoomTo()
     p.show()
+
 
 def show_two_mols(mol1, mol2):
     """
     Draw two molecules.
     """
     p = py3Dmol.view()
-    p.addModel(Chem.MolToMolBlock(mol1), 'sdf')
-    p.addModel(Chem.MolToMolBlock(mol2), 'sdf')
-    p.setStyle({"model": 0}, {'stick':{'colorscheme':'lightgreyCarbon'}})
-    p.setStyle({"model": 1}, {'stick':{'colorscheme':'redCarbon'}})
+    p.addModel(Chem.MolToMolBlock(mol1), "sdf")
+    p.addModel(Chem.MolToMolBlock(mol2), "sdf")
+    p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
+    p.setStyle({"model": 1}, {"stick": {"colorscheme": "redCarbon"}})
     p.zoomTo()
     p.show()

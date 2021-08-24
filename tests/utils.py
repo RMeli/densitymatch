@@ -216,6 +216,21 @@ class AlignShow:
 
         return best, best_idxs
 
+    def show_best(self):
+        """
+        Show best alignment (according to score)
+        """
+        _, (i, j) = self.best()
+        return self.show(i,j)
+
+    def save(self, i, j, outfile=None):
+        if outfile is None:
+            outfile = f"alignment_{i}_{j}.sdf"
+
+        with Chem.SDWriter(outfile) as w:
+            w.write(self.mols[i], confId=j) # Molecule i aligned to molecule j
+            w.write(self.mols[j], confId=j) # Molecule j
+
 
 
 def translate_and_rotate(mol, u=None, t=None, confId=0):

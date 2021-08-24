@@ -66,7 +66,7 @@ name_to_rgb_molgrid = {
 }
 
 
-def mol_to_grid(obmol, dimension, resolution, typer):
+def mol_to_grid(obmol, dimension, resolution, typer, c=None):
     gm = molgrid.GridMaker(resolution=resolution, dimension=dimension)
 
     # Grid dimensions (including types)
@@ -88,7 +88,8 @@ def mol_to_grid(obmol, dimension, resolution, typer):
     ex.coord_sets.append(cs)
 
     # Compute center
-    c = ex.coord_sets[0].center()  # Only one coordinate set
+    if c is None:
+        c = ex.coord_sets[0].center()  # Only one coordinate set
 
     # https://gnina.github.io/libmolgrid/python/index.html#the-transform-class
     transform = molgrid.Transform(

@@ -6,6 +6,7 @@ tests/ligands/*.pcd
 tests/ligands/*/*.pcd
 tests/ligands/*/conf_*.sdf
 tests/ligands/*/frag_*_*.sdf
+tests/ligands/*/murcko_*.sdf
 tests/ligands/*/allfrags.sdf
 tests/bestsensaas.sdf
 tests/catsensaas.sdf

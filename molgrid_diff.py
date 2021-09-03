@@ -21,6 +21,26 @@ else:
 def grid_diff(mol1, mol2, dimension, resolution, typer, c=None):
     """
     Compute density difference between two molecules.
+
+    Parameters
+    ----------
+    mol1:
+        Molecule 1
+    mol2:
+        Molecule 2
+    dimension:
+        Grid dimension (1D)
+    resolution:
+        Grid resolution
+    typer:
+        Atom typer
+    c:
+        Grid center
+
+    Notes
+    -----
+    The smaller molecule (less atoms) is always subtracted to the bigger molecule
+    (more atoms).
     """
     g1, c1 = mol_to_grid(mol1, dimension, resolution, typer)
     g2, c2 = mol_to_grid(mol2, dimension, resolution, typer, c=c1)
@@ -56,6 +76,8 @@ if __name__ == "__main__":
         "-o", "--output", type=str, default="diff.pcd", help="Output file",
     )
     p.add_argument("--dx", action="store_true", help="Output grids as DX files")
+    p.add_argument("-np", "--numpy", action="store_true", help="Output grid as numpy file")
+
     # p.add_argument("-v", "--verbose", action="store_true", help="Verbose")
 
     args = p.parse_args()
@@ -78,10 +100,14 @@ if __name__ == "__main__":
         molgrid.write_dx_grids(
             prefix="xxx",
             names=typer.get_type_names(),
-            grid=molgrid.Grid4f(diff[0].cpu()),
+            grid=diff[0].cpu(),
             center=c,
             resolution=args.resolution,
+            scale=1.0
         )
+
+    if args.numpy:
+        np.save(args.output.replace(".pcd", ".npy"), diff.cpu().numpy(), allow_pickle=False)
 
     # Convert grid to point cloud
     pcd = grid_to_pcd(diff, c, args.dimension, args.resolution, typer)

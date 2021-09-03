@@ -76,7 +76,9 @@ if __name__ == "__main__":
         "-o", "--output", type=str, default="diff.pcd", help="Output file",
     )
     p.add_argument("--dx", action="store_true", help="Output grids as DX files")
-    p.add_argument("-np", "--numpy", action="store_true", help="Output grid as numpy file")
+    p.add_argument(
+        "-np", "--numpy", action="store_true", help="Output grid as numpy file"
+    )
 
     # p.add_argument("-v", "--verbose", action="store_true", help="Verbose")
 
@@ -103,11 +105,13 @@ if __name__ == "__main__":
             grid=diff[0].cpu(),
             center=c,
             resolution=args.resolution,
-            scale=1.0
+            scale=1.0,
         )
 
     if args.numpy:
-        np.save(args.output.replace(".pcd", ".npy"), diff.cpu().numpy(), allow_pickle=False)
+        np.save(
+            args.output.replace(".pcd", ".npy"), diff.cpu().numpy(), allow_pickle=False
+        )
 
     # Convert grid to point cloud
     pcd = grid_to_pcd(diff, c, args.dimension, args.resolution, typer)

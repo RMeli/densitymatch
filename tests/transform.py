@@ -17,6 +17,7 @@ args = p.parse_args()
 rng = np.random.default_rng(seed=42)
 
 for fmol in args.mols:
+    # TODO: Use functionailty from utils
     s = Chem.SDMolSupplier(fmol)
     mol = next(s)
 

@@ -13,11 +13,12 @@ from openbabel import pybel
 
 #  FIXME: Make liGAN a proper python package
 import sys
-sys.path.append("../ligan-EVOTEC") # Evotec version of liGAN (master branch)
+
+sys.path.append("../ligan-EVOTEC")  # Evotec version of liGAN (master branch)
 
 # liGAN-related imports
 import fitting
-from  atom_grids import AtomGrid
+from atom_grids import AtomGrid
 from atom_types import get_channels_from_map
 
 if __name__ == "__main__":
@@ -30,9 +31,7 @@ if __name__ == "__main__":
     else:
         device = torch.device("cpu")
 
-    p = argparse.ArgumentParser(
-        description="Fit atoms in density difference."
-    )
+    p = argparse.ArgumentParser(description="Fit atoms in density difference.")
     p.add_argument("numpy", type=str, help="NumPy file")
     p.add_argument(
         "-r", "--resolution", type=float, default=0.5, help="Grid resolution"
@@ -57,12 +56,12 @@ if __name__ == "__main__":
     if args.verbose:
         print("Grid size:", npgrid.shape)
 
-    #grid = torch.from_numpy(npgrid)
-    #grid.to(device)
+    # grid = torch.from_numpy(npgrid)
+    # grid.to(device)
 
     # Create GNINA typer
-    typer = molgrid.FileMappedGninaTyper(args.ligmap) # Called "lig_map" in liGAN
-    lig_channels = get_channels_from_map(typer, name_prefix='Ligand')
+    typer = molgrid.FileMappedGninaTyper(args.ligmap)  # Called "lig_map" in liGAN
+    lig_channels = get_channels_from_map(typer, name_prefix="Ligand")
 
     # Move grid to atom grid
     # AtomGrid is a 3D representation of a molecular structure
@@ -70,11 +69,11 @@ if __name__ == "__main__":
     # Need to work with NumPy arrays, not PyTorch tensors
     # Both the values and the center have to be NumPy arrays
     ag = AtomGrid(
-            values=npgrid[0], # Use NumPy array to avoid UserWarning
-            channels=lig_channels,
-            center=c,
-            resolution=args.resolution,
-        )
+        values=npgrid[0],  # Use NumPy array to avoid UserWarning
+        channels=lig_channels,
+        center=c,
+        resolution=args.resolution,
+    )
 
     # From the docstring of simple_atom_fit:
     #   Types are ignored
@@ -85,7 +84,7 @@ if __name__ == "__main__":
         types=None,
         iters=25,
         tol=0.01,
-        grm=1.0,
+        grm=1.0,  # Gaussian radius multiplier?
     )
 
     print(mol)

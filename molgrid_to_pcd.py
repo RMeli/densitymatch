@@ -93,10 +93,11 @@ def mol_to_grid(obmol, dimension, resolution, typer, c=None):
         
     # https://gnina.github.io/libmolgrid/python/index.html#the-transform-class
     transform = molgrid.Transform(c, random_translate=0.0, random_rotation=False)
-    transform.forward(ex, ex, dotranslate=True)
+    #transform.forward(ex, ex, dotranslate=True)
 
     # Compute grid
-    gm.forward(ex, grid[0])
+    #gm.forward(ex, grid[0], random_translation=0.0, random_rotation=False, center=c) # Signature missing?
+    gm.forward(ex, transform, grid[0])
 
     return grid, c
 

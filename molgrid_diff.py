@@ -45,12 +45,17 @@ def grid_diff(mol1, mol2, dimension, resolution, typer, c=None):
     g1, c1 = mol_to_grid(mol1, dimension, resolution, typer)
     g2, c2 = mol_to_grid(mol2, dimension, resolution, typer, c=c1)
 
+    # FIXME: Is this what we really want?
     # Always subtract the density of the smaller molecule
     # to the density of the bigger molecule
     if len(mol1.atoms) > len(mol2.atoms):
         diff = g1 - g2
     else:
         diff = g2 - g1
+
+    # FIXME: Do we want get the absolute value of the density?
+    # Probably not since that would imply re-fitting the removed molecule (known)?
+    diff = torch.abs(diff)
 
     return diff, c1
 

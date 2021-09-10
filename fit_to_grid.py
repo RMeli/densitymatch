@@ -8,8 +8,11 @@ TODO: ADD LICENSE
 
 
 import molgrid
+
 from rdkit import Chem
 from rdkit.Chem import rdchem
+from rdkit.Chem.MolStandardize import rdMolStandardize
+
 from openbabel import pybel
 
 #  FIXME: Make liGAN a proper python package
@@ -43,7 +46,7 @@ def nearest_atoms(rdmol1, rdmol2):
                 (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2 + (pos1.z - pos2.z) ** 2
             )
 
-            print(np.sqrt(d2))
+            #print(np.sqrt(d2))
 
             if d2 < mindist2:
                 mindist2 = d2
@@ -60,6 +63,8 @@ def connectMols(mol1, mol2, idx1, idx2, d):
 
     Notes
     -----
+    https://colab.research.google.com/github/pschmidtke/blog/blob/master/_notebooks/2021-01-23-grafting-fragments.ipynb#scrollTo=vhZlPkDHILQ7
+
     Original function from:
     https://github.com/molecularsets/moses/blob/master/moses/baselines/combinatorial.py
     """
@@ -93,6 +98,108 @@ def connectMols(mol1, mol2, idx1, idx2, d):
     return mol
 
 
+def fit_atoms(diff, center, resolution, ligmap, verbose=False):
+    """
+    Fit libmolgrid density obtained as difference between a scaffold/fragment and
+    a (generated) density from a larger molecule.
+    """
+    # Create GNINA typer
+    typer = molgrid.FileMappedGninaTyper(ligmap)  # Called "lig_map" in liGAN
+    lig_channels = get_channels_from_map(typer, name_prefix="Ligand")
+
+    # Move grid to atom grid
+    # AtomGrid is a 3D representation of a molecular structure
+    # Assumes only one batch with one element (single grid)
+    # Need to work with NumPy arrays, not PyTorch tensors
+    # Both the values and the center have to be NumPy arrays
+    ag = AtomGrid(
+        values=diff[0],  # Use NumPy array to avoid UserWarning
+        channels=lig_channels,
+        center=c,
+        resolution=resolution,
+    )
+
+    # From the docstring of simple_atom_fit:
+    #   Types are ignored
+    #   The number of  atoms of each type is inferred from the density
+    # Molecule returned is an AtomStruct
+    asmol, bestgrid = fitting.simple_atom_fit(
+        mgrid=ag,
+        types=None,
+        iters=25,
+        tol=0.01,
+        grm=1.0,  # Gaussian radius multiplier?
+    )
+
+    # Get OBMol from AtomStruct
+    # Convert OBMol to pybel Molecule for easy output
+    # OBMol does not contain bonds at this stage
+    obmol = pybel.Molecule(asmol.to_ob_mol())
+    if verbose:
+        obmol.write("sdf", "atoms.sdf", overwrite=True)
+
+    # Reconstruct OpenBabel molecule from AtomStruct
+    obmol, mismatches, visited = fitting.make_obmol(asmol)
+    if verbose:
+        obmol.write("sdf", "obmol.sdf", overwrite=True)
+
+    # Convert fitted OpenBabel molecule to RDKit
+    # Need to use the OBMol object instead of the pybel molecule
+    rdmol = fitting.convert_ob_mol_to_rd_mol(obmol.OBMol)
+    rdmol = Chem.RemoveHs(rdmol)  # Remove hydrogens
+
+    if verbose:
+        # Output final reconstructed molecule
+        with open("rdmol.mol", "w") as fout:
+            fout.write(Chem.MolToMolBlock(rdmol))
+
+    return rdmol
+
+
+def molgrid_diff_to_mol(diff, center, resolution, ligmap, scaffold=None, verbose=False):
+    """
+    Fit atoms to density difference and (eventually) link such fragment to a given
+    scaffold.
+
+    Parameters
+    ----------
+    diff: np.ndarray
+        Atomic density (obtained as difference)
+    center:
+        Grid centers
+    resolution:
+        Grid resolutioon
+    ligmap:
+        Path to ligand mapping file
+    scaffold:
+        Optional scaffold to link to the fitted atoms (reconstructed fragment)
+    verbose:
+        Flag to print out intermediate states
+    """
+    # Molecule (fragment) built by fitting atoms into the density difference
+    rdmol = fit_atoms(diff, center, resolution, ligmap, verbose)
+
+    if scaffold is not None:
+        # Reconstruct whole molecule by linking nearest atoms
+        idx1, idx2, d = nearest_atoms(rdmol, rdscaffold)
+        rdmolfinal = connectMols(rdmol, rdscaffold, idx1, idx2, d)
+    else:
+        rdmolfinal = rdmol
+
+    # Try to sanitize and normalise molecule
+    # https://github.com/greglandrum/RSC_OpenScience_Standardization_202104/blob/main/MolStandardize%20pieces.ipynb
+    rdmolfinal.UpdatePropertyCache(strict=False)
+    Chem.SanitizeMol(
+        rdmolfinal,
+        sanitizeOps=(
+            Chem.SANITIZE_ALL ^ Chem.SANITIZE_CLEANUP ^ Chem.SANITIZE_PROPERTIES
+        ),
+    )
+    rdmolfinal = rdMolStandardize.Normalize(rdmolfinal)
+
+    return rdmolfinal
+
+
 if __name__ == "__main__":
     import argparse
     import numpy as np
@@ -113,7 +220,7 @@ if __name__ == "__main__":
         "-m", "--ligmap", type=str, default="files/ligmap", help="Ligand types file"
     )
     p.add_argument(
-        "-o", "--output", type=str, default="diff.pcd", help="Output file",
+        "-o", "--output", type=str, default="rdmolfinal.mol", help="Output file",
     )
     p.add_argument("-v", "--verbose", action="store_true", help="Verbose")
 
@@ -128,68 +235,16 @@ if __name__ == "__main__":
 
     if args.verbose:
         print("Grid size:", npgrid.shape)
-
-    # grid = torch.from_numpy(npgrid)
-    # grid.to(device)
-
-    # Create GNINA typer
-    typer = molgrid.FileMappedGninaTyper(args.ligmap)  # Called "lig_map" in liGAN
-    lig_channels = get_channels_from_map(typer, name_prefix="Ligand")
-
-    # Move grid to atom grid
-    # AtomGrid is a 3D representation of a molecular structure
-    # Assumes only one batch with one element (single grid)
-    # Need to work with NumPy arrays, not PyTorch tensors
-    # Both the values and the center have to be NumPy arrays
-    ag = AtomGrid(
-        values=npgrid[0],  # Use NumPy array to avoid UserWarning
-        channels=lig_channels,
-        center=c,
-        resolution=args.resolution,
-    )
-
-    # From the docstring of simple_atom_fit:
-    #   Types are ignored
-    #   The number of  atoms of each type is inferred from the density
-    # Molecule returned is an AtomStruct
-    asmol, bestgrid = fitting.simple_atom_fit(
-        mgrid=ag,
-        types=None,
-        iters=25,
-        tol=0.01,
-        grm=1.0,  # Gaussian radius multiplier?
-    )
-
-    # Get OBMol from AtomStruct
-    # Convert OBMol to pybel Molecule for easy output
-    # OBMol does not contain bonds at this stage
-    obmol = pybel.Molecule(asmol.to_ob_mol())
-    obmol.write("sdf", "obmol_fitted.sdf", overwrite=True)
-
-    # Reconstruct OpenBabel molecule from AtomStruct
-    obmol, mismatches, visited = fitting.make_obmol(asmol)
-    obmol.write("sdf", "obmol_bonds.sdf", overwrite=True)
-    print(type(obmol))
-
-    # Convert fitted OpenBabel molecule to RDKit
-    # Need to use the OBMol object instead of the pybel molecule
-    rdmol = fitting.convert_ob_mol_to_rd_mol(obmol.OBMol)
-    rdmol = Chem.RemoveHs(rdmol)  # Remove hydrogens
+        print("Center:", c)
 
     # Get original fragment fitted to the density (and removed)
     rdscaffold = next(Chem.SDMolSupplier(args.scaffold, removeHs=True))
 
-    idx1, idx2, d = nearest_atoms(rdmol, rdscaffold)
-    print(idx1, idx2, d)
+    # Fit atoms into density difference
+    # Link nearest atom from the fit to the scaffold to build whole molecule
+    rdmolfinal = molgrid_diff_to_mol(npgrid, c, args.resolution, args.ligmap, rdscaffold, args.verbose)
 
-    rdmolfinal = connectMols(rdmol, rdscaffold, idx1, idx2, d)
-
-    # Convert back to OpenBabel, which does not care if things go wrong...
-    obmolfinal = pybel.Molecule(rd_mol_to_ob_mol(rdmolfinal))
-    obmolfinal.write("sdf", "obmolfinal.sdf", overwrite=True)
-
-    # Try to output RDKkit molecule as well, as MOL file
-    # MolToMolBlock allows to use kekulize=False
-    with open("rdmolfinal.mol", "w") as fout:
-        rdmolfinalh = Chem.AddHs(rdmolfinal, addCoords=True)
-        fout.write(Chem.MolToMolBlock(rdmolfinalh, kekulize=False))
+    # Output final reconstructed molecule
+    with open(args.output, "w") as fout:
+        # rdmolfinalh = Chem.AddHs(rdmolfinal, addCoords=True)
+        fout.write(Chem.MolToMolBlock(rdmolfinal))

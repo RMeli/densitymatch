@@ -6,6 +6,8 @@ Based on liGAN.
 TODO: ADD LICENSE
 """
 
+import numpy as np
+
 
 import molgrid
 
@@ -24,7 +26,6 @@ sys.path.append("../ligan-EVOTEC")  # Evotec version of liGAN (master branch)
 import fitting
 from atom_grids import AtomGrid
 from atom_types import get_channels_from_map
-from molecules import rd_mol_to_ob_mol
 
 
 def nearest_atoms(rdmol1, rdmol2):
@@ -46,7 +47,7 @@ def nearest_atoms(rdmol1, rdmol2):
                 (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2 + (pos1.z - pos2.z) ** 2
             )
 
-            #print(np.sqrt(d2))
+            # print(np.sqrt(d2))
 
             if d2 < mindist2:
                 mindist2 = d2
@@ -115,7 +116,7 @@ def fit_atoms(diff, center, resolution, ligmap, verbose=False):
     ag = AtomGrid(
         values=diff[0],  # Use NumPy array to avoid UserWarning
         channels=lig_channels,
-        center=c,
+        center=center,
         resolution=resolution,
     )
 
@@ -181,8 +182,8 @@ def molgrid_diff_to_mol(diff, center, resolution, ligmap, scaffold=None, verbose
 
     if scaffold is not None:
         # Reconstruct whole molecule by linking nearest atoms
-        idx1, idx2, d = nearest_atoms(rdmol, rdscaffold)
-        rdmolfinal = connectMols(rdmol, rdscaffold, idx1, idx2, d)
+        idx1, idx2, d = nearest_atoms(rdmol, scaffold)
+        rdmolfinal = connectMols(rdmol, scaffold, idx1, idx2, d)
     else:
         rdmolfinal = rdmol
 
@@ -202,7 +203,6 @@ def molgrid_diff_to_mol(diff, center, resolution, ligmap, scaffold=None, verbose
 
 if __name__ == "__main__":
     import argparse
-    import numpy as np
     import torch
 
     if torch.cuda.is_available():
@@ -242,7 +242,9 @@ if __name__ == "__main__":
 
     # Fit atoms into density difference
     # Link nearest atom from the fit to the scaffold to build whole molecule
-    rdmolfinal = molgrid_diff_to_mol(npgrid, c, args.resolution, args.ligmap, rdscaffold, args.verbose)
+    rdmolfinal = molgrid_diff_to_mol(
+        npgrid, c, args.resolution, args.ligmap, rdscaffold, args.verbose
+    )
 
     # Output final reconstructed molecule
     with open(args.output, "w") as fout:

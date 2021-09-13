@@ -57,6 +57,28 @@ def nearest_atoms(rdmol1, rdmol2):
     return midx1, midx2, np.sqrt(mindist2)
 
 
+def atom_distances(rdmol1, rdmol2):
+    distances = []
+
+    for atom1 in rdmol1.GetAtoms():
+        idx1 = atom1.GetIdx()
+        pos1 = rdmol1.GetConformer().GetAtomPosition(idx1)
+
+        for atom2 in rdmol2.GetAtoms():
+            idx2 = atom2.GetIdx()
+            pos2 = rdmol2.GetConformer().GetAtomPosition(idx2)
+
+            d2 = (
+                (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2 + (pos1.z - pos2.z) ** 2
+            )
+
+            distances.append((idx1, idx2, np.sqrt(d2)))
+
+    distances.sort(key=lambda t: t[-1])
+
+    return distances
+
+
 def connectMols(mol1, mol2, idx1, idx2, d):
     """
     Connect to molecules by creating a single bond between given atoms (or one of their
@@ -97,6 +119,29 @@ def connectMols(mol1, mol2, idx1, idx2, d):
     mol = emol.GetMol()
 
     return mol
+
+
+def remove_overlapping(mol1, mol2, threshold=0.3):
+    """
+    Remove atoms from mol2 overlapping with mol1.
+    """
+
+    emol = Chem.EditableMol(mol2)
+
+    # TODO: Optimize
+    adists = atom_distances(mol1, mol2)
+
+    to_remove = []
+    for _, j, d in adists:
+        if d < threshold:
+            to_remove.append(j)
+
+    # When atom is deleted the index is lost
+    # https://sourceforge.net/p/rdkit/mailman/rdkit-discuss/thread/2017062518163195443411%40gmail.com/
+    for r in sorted(to_remove, reverse=True):
+        emol.RemoveAtom(r)
+
+    return emol.GetMol()
 
 
 def fit_atoms(diff, center, resolution, ligmap, verbose=False):
@@ -181,9 +226,29 @@ def molgrid_diff_to_mol(diff, center, resolution, ligmap, scaffold=None, verbose
     rdmol = fit_atoms(diff, center, resolution, ligmap, verbose)
 
     if scaffold is not None:
+        rdmolfinal = scaffold  # Initialise molecule with scaffold
+
         # Reconstruct whole molecule by linking nearest atoms
-        idx1, idx2, d = nearest_atoms(rdmol, scaffold)
-        rdmolfinal = connectMols(rdmol, scaffold, idx1, idx2, d)
+        # idx1, idx2, d = nearest_atoms(rdmol, scaffold)
+
+        # Remove fitted atoms overlapping with fragment
+        rdmol = remove_overlapping(rdmolfinal, rdmol)
+        if verbose:
+            # Output final reconstructed molecule
+            with open("rdmol-noverlap.mol", "w") as fout:
+                fout.write(Chem.MolToMolBlock(rdmol))
+
+        # Fitted atoms can be in different part of the scaffold
+        # They constitute different disconnected components (fragments)
+        print(Chem.GetMolFrags(rdmol, asMols=True, sanitizeFrags=True))
+        for frag in Chem.GetMolFrags(rdmol, asMols=True, sanitizeFrags=True):
+            # Get all distance between fragment and scaffold (sorted)
+            idx1, idx2, d = nearest_atoms(frag, rdmolfinal)
+            print(idx1, idx2, d)
+
+            # Connect fragment to elaborated scaffold
+            rdmolfinal = connectMols(frag, rdmolfinal, idx1, idx2, d)
+
     else:
         rdmolfinal = rdmol
 

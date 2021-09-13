@@ -105,7 +105,7 @@ if __name__ == "__main__":
         # If a function takes Grid4f as input, torch.Tensor need to be moved to the CPU
         print(type(diff), type(typer.get_type_names()), type(c), type(args.resolution))
         molgrid.write_dx_grids(
-            prefix="xxx",
+            prefix="",
             names=typer.get_type_names(),
             grid=diff[0].cpu(),
             center=c,

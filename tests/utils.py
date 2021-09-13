@@ -56,7 +56,7 @@ def transform_and_add_conformer(mol, tran, fromConfId=0, toConfId=1) -> None:
     for i in range(n_atoms):
         conf.SetAtomPosition(i, coords_new[i, :])
 
-    # Conformer ID manually assigned above, avoid automatic assignement here
+    # Conformer ID manually assigned above, avoid automatic assignssment here
     _ = mol.AddConformer(conf, assignId=False)
 
 
@@ -64,7 +64,7 @@ class AlignShow:
     """
     Align molecules pairs within a list.
 
-    Store scroes and aligned conformers for visualisation (cached).
+    Store scores and aligned conformers for visualisation (cached).
     """
 
     def __init__(self, mols, pcds):
@@ -234,6 +234,11 @@ class AlignShow:
     def save(self, i, j, outfile=None):
         if outfile is None:
             outfile = f"alignment_{i}_{j}.sdf"
+
+        # Make sure conformers to be saved exist
+        # Avoid BadConformerId error
+        if not (i, j) in self.scores:
+            self.align(i, j)
 
         with Chem.SDWriter(outfile) as w:
             w.write(self.mols[i], confId=j)  # Molecule i aligned to molecule j

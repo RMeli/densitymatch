@@ -36,12 +36,15 @@ From: nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
     update-alternatives --install /usr/bin/python python /usr/bin/python3 1
     update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 
-    pip install numpy pandas pytest scipy
-    pip install torch torchvision torchaudio
-    pip install GPUtil psutil pynvml
-    pip install seaborn scikit-image parse protobuf
-    pip install pydot
-    pip install open3d
+    python -m pip install -U pip
+    python -m pip install -U numpy pandas pytest scipy
+    python -m pip install -U torch torchvision torchaudio
+    python -m pip install -U GPUtil psutil pynvml
+    python -m pip install -U matplotlib seaborn scikit-image 
+    python -m pip install -U parse protobuf
+    python -m pip install -U open3d pydot py3dmol pydot
+    python -m pip install -U black flake8
+    python -m pip install -U jupyter tqdm
 
     git clone -b Release_2021_03_1 --depth=1 https://github.com/rdkit/rdkit.git "${ROOTDIR}/rdkit"
     cd "${ROOTDIR}/rdkit"

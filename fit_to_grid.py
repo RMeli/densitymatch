@@ -28,36 +28,10 @@ from atom_grids import AtomGrid
 from atom_types import get_channels_from_map
 
 
-def nearest_atoms(rdmol1, rdmol2):
-    """
-    Given two different molecules, determine the closest atoms.
-    """
-    mindist2 = np.inf
-    midx1, midx2 = -1, -1
-
-    for atom1 in rdmol1.GetAtoms():
-        idx1 = atom1.GetIdx()
-        pos1 = rdmol1.GetConformer().GetAtomPosition(idx1)
-
-        for atom2 in rdmol2.GetAtoms():
-            idx2 = atom2.GetIdx()
-            pos2 = rdmol2.GetConformer().GetAtomPosition(idx2)
-
-            d2 = (
-                (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2 + (pos1.z - pos2.z) ** 2
-            )
-
-            # print(np.sqrt(d2))
-
-            if d2 < mindist2:
-                mindist2 = d2
-                midx1 = idx1
-                midx2 = idx2
-
-    return midx1, midx2, np.sqrt(mindist2)
-
-
 def atom_distances(rdmol1, rdmol2):
+    """
+    Compute distances between all atom pairs of two different molecules.
+    """
     distances = []
 
     for atom1 in rdmol1.GetAtoms():
@@ -77,6 +51,15 @@ def atom_distances(rdmol1, rdmol2):
     distances.sort(key=lambda t: t[-1])
 
     return distances
+
+
+def nearest_atoms(rdmol1, rdmol2):
+    """
+    Given two different molecules, determine the closest atoms.
+    """
+    adists = atom_distances(rdmol1, rdmol2)
+
+    return adists[0]
 
 
 def connectMols(mol1, mol2, idx1, idx2, d):
@@ -228,10 +211,9 @@ def molgrid_diff_to_mol(diff, center, resolution, ligmap, scaffold=None, verbose
     if scaffold is not None:
         rdmolfinal = scaffold  # Initialise molecule with scaffold
 
-        # Reconstruct whole molecule by linking nearest atoms
-        # idx1, idx2, d = nearest_atoms(rdmol, scaffold)
-
-        # Remove fitted atoms overlapping with fragment
+        # Remove fitted atoms overlapping with scaffold
+        # This should create disconnected component
+        # Avoid problems with two ring substituents bound together
         rdmol = remove_overlapping(rdmolfinal, rdmol)
         if verbose:
             # Output final reconstructed molecule
@@ -240,11 +222,9 @@ def molgrid_diff_to_mol(diff, center, resolution, ligmap, scaffold=None, verbose
 
         # Fitted atoms can be in different part of the scaffold
         # They constitute different disconnected components (fragments)
-        print(Chem.GetMolFrags(rdmol, asMols=True, sanitizeFrags=True))
         for frag in Chem.GetMolFrags(rdmol, asMols=True, sanitizeFrags=True):
             # Get all distance between fragment and scaffold (sorted)
             idx1, idx2, d = nearest_atoms(frag, rdmolfinal)
-            print(idx1, idx2, d)
 
             # Connect fragment to elaborated scaffold
             rdmolfinal = connectMols(frag, rdmolfinal, idx1, idx2, d)

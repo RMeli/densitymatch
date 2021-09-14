@@ -17,6 +17,13 @@ The goal is to align a molecule (or fragment) to a given `libmolgrid` density. T
 * [`liGAN`] Fit remaining density with atom
 * [`liGAN`] Reconstruct full molecule
 
+### Scripts
+
+* [molgrid_to_pcd.py]: convert molecule into atomic density grid and subsequently convert the grid into a point cloud
+* [score_pcd.py]: score alignment between point clouds and provide rototranslation for the optimal alignment
+* [molgrid_diff.py]: compute difference between atomic density grids
+* [fit_to_grid.py]: fit atoms to density grid (difference)
+
 ## Tools
 
 ### Convert SDF File to Point Cloud

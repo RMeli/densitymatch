@@ -136,6 +136,10 @@ def fit_atoms(diff, center, resolution, ligmap, verbose=False):
     typer = molgrid.FileMappedGninaTyper(ligmap)  # Called "lig_map" in liGAN
     lig_channels = get_channels_from_map(typer, name_prefix="Ligand")
 
+    # If center is a molgrid vector, convert to numpy array
+    if isinstance(center, molgrid.float3):
+        center = np.array([*center])
+
     # Move grid to atom grid
     # AtomGrid is a 3D representation of a molecular structure
     # Assumes only one batch with one element (single grid)

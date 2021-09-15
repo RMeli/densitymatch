@@ -164,7 +164,7 @@ class AlignShow:
         )  # mol2 original coordinates
 
         p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
-        p.setStyle({"model": 1}, {"stick": {"colorscheme": "redCarbon"}})
+        p.setStyle({"model": 1}, {"stick": {"colorscheme": "purpleCarbon"}})
         p.setStyle({"model": 2}, {"stick": {"colorscheme": "greyCarbon"}})
 
         p.zoomTo()
@@ -348,14 +348,14 @@ def show_all_conformers(mol):
     p.show()
 
 
-def show_two_mols(mol1, mol2):
+def show_two_mols(mol1, mol2, confId1=0, confId2=0):
     """
     Draw two molecules.
     """
     p = py3Dmol.view()
-    p.addModel(Chem.MolToMolBlock(mol1), "sdf")
-    p.addModel(Chem.MolToMolBlock(mol2), "sdf")
+    p.addModel(Chem.MolToMolBlock(mol1, confId=confId1), "sdf")
+    p.addModel(Chem.MolToMolBlock(mol2, confId=confId2), "sdf")
     p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
-    p.setStyle({"model": 1}, {"stick": {"colorscheme": "redCarbon"}})
+    p.setStyle({"model": 1}, {"stick": {"colorscheme": "purpleCarbon"}})
     p.zoomTo()
     p.show()

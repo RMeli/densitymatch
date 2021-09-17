@@ -34,6 +34,7 @@ def atom_distances(rdmol1, rdmol2):
     """
     distances = []
 
+    # TODO: Use getPositions() to speed this up
     for atom1 in rdmol1.GetAtoms():
         idx1 = atom1.GetIdx()
         pos1 = rdmol1.GetConformer().GetAtomPosition(idx1)

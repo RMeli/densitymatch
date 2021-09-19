@@ -15,6 +15,9 @@ fragments/Enamine*.sdf
 fragments/DSIpoised/
 fragments/VEHICLe/
 
+# slurm
+fragments/slurm
+
 # Python
 __pycache__
 .ipynb_checkpoints

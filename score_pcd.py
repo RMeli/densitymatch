@@ -42,6 +42,9 @@ import open3d as o3d
 
 
 def fit_and_score(pcds, voxel_size, threshold):
+
+    assert len(pcds) == 2
+
     # + ---------------- +
     # | Compute features |
     # + ---------------- +

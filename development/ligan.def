@@ -44,7 +44,7 @@ From: nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
     python -m pip install -U parse protobuf
     python -m pip install -U open3d pydot py3dmol pydot
     python -m pip install -U black flake8
-    python -m pip install -U jupyter tqdm
+    python -m pip install -U jupyter tqdm mols2grid
 
     git clone -b Release_2021_03_1 --depth=1 https://github.com/rdkit/rdkit.git "${ROOTDIR}/rdkit"
     cd "${ROOTDIR}/rdkit"

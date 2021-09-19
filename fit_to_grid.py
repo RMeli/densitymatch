@@ -34,6 +34,7 @@ def atom_distances(rdmol1, rdmol2):
     """
     distances = []
 
+    # TODO: Use getPositions() to speed this up
     for atom1 in rdmol1.GetAtoms():
         idx1 = atom1.GetIdx()
         pos1 = rdmol1.GetConformer().GetAtomPosition(idx1)
@@ -135,6 +136,10 @@ def fit_atoms(diff, center, resolution, ligmap, verbose=False):
     # Create GNINA typer
     typer = molgrid.FileMappedGninaTyper(ligmap)  # Called "lig_map" in liGAN
     lig_channels = get_channels_from_map(typer, name_prefix="Ligand")
+
+    # If center is a molgrid vector, convert to numpy array
+    if isinstance(center, molgrid.float3):
+        center = np.array([*center])
 
     # Move grid to atom grid
     # AtomGrid is a 3D representation of a molecular structure

@@ -18,16 +18,16 @@ else:
     device = torch.device("cpu")
 
 
-def grid_diff(mol1, mol2, dimension, resolution, typer, c=None):
+def grid_diff(obmol1, obmol2, dimension, resolution, typer, c=None):
     """
     Compute density difference between two molecules.
 
     Parameters
     ----------
-    mol1:
-        Molecule 1
-    mol2:
-        Molecule 2
+    obmol1:
+        Molecule 1 (OpenBabel)
+    obmol2:
+        Molecule 2 (OpenBabel)
     dimension:
         Grid dimension (1D)
     resolution:
@@ -42,13 +42,13 @@ def grid_diff(mol1, mol2, dimension, resolution, typer, c=None):
     The smaller molecule (less atoms) is always subtracted to the bigger molecule
     (more atoms).
     """
-    g1, c1 = mol_to_grid(mol1, dimension, resolution, typer)
-    g2, c2 = mol_to_grid(mol2, dimension, resolution, typer, c=c1)
+    g1, c1 = mol_to_grid(obmol1, dimension, resolution, typer)
+    g2, c2 = mol_to_grid(obmol2, dimension, resolution, typer, c=c1)
 
     # FIXME: Is this what we really want?
     # Always subtract the density of the smaller molecule
     # to the density of the bigger molecule
-    if len(mol1.atoms) > len(mol2.atoms):
+    if len(obmol1.atoms) > len(obmol2.atoms):
         diff = g1 - g2
     else:
         diff = g2 - g1

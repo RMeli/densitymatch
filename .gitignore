@@ -18,6 +18,9 @@ fragments/VEHICLe/
 # nohup
 nohup.out
 
+# slurm
+fragments/slurm
+
 # Python
 __pycache__
 .ipynb_checkpoints

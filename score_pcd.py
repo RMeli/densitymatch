@@ -39,9 +39,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 import open3d as o3d
+import numpy as np
 
 
-def fit_and_score(pcds, voxel_size, threshold):
+def fit_and_score(pcds, voxel_size, threshold, fast=False):
+    """
+    Parameters
+    ----------
+    pcds:
+        Tuple (pair) of point clouds
+    voxel_size:
+        PCD voxel_size
+    threshold:
+        Distance threshold (maximum correspondence distance)
+    """
 
     assert len(pcds) == 2
 
@@ -71,28 +82,37 @@ def fit_and_score(pcds, voxel_size, threshold):
 
     distance_threshold = voxel_size * 1.5
 
-    # RANSAC is non-deterministic; impossible to compare with the original SENSAAS implementation
-    #   open3d/#288     | https://github.com/intel-isl/Open3D/issues/288
-    #   open3d/#1263    | https://github.com/intel-isl/Open3D/issues/1263
-    gresult = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
-        pcds[0],
-        pcds[1],
-        fpfhs[0],
-        fpfhs[1],
-        mutual_filter=True,
-        max_correspondence_distance=distance_threshold,
-        estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(
-            False
-        ),
-        ransac_n=4,
-        checkers=[
-            o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
-            o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
-                distance_threshold
+    if not fast:
+        # RANSAC is non-deterministic; impossible to compare with the original SENSAAS implementation
+        #   open3d/#288     | https://github.com/intel-isl/Open3D/issues/288
+        #   open3d/#1263    | https://github.com/intel-isl/Open3D/issues/1263
+        gresult = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
+            pcds[0],
+            pcds[1],
+            fpfhs[0],
+            fpfhs[1],
+            mutual_filter=True,
+            max_correspondence_distance=distance_threshold,
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(
+                False
             ),
-        ],
-        criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(400000, 1000),
-    )
+            ransac_n=4,
+            checkers=[
+                o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
+                o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(
+                    distance_threshold
+                ),
+            ],
+            criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(400000, 1000),
+        )
+    else:
+        # This is a faster version of global point cloud registration
+        gresult = o3d.pipelines.registration.registration_fast_based_on_feature_matching(
+            pcds[0],
+            pcds[1],
+            fpfhs[0],
+            fpfhs[1],
+        )
 
     gfit = o3d.pipelines.registration.evaluate_registration(
         pcds[0], pcds[1], threshold, gresult.transformation
@@ -106,9 +126,9 @@ def fit_and_score(pcds, voxel_size, threshold):
         pcds[0],
         pcds[1],
         max_correspondence_distance=radius_normal,
-        init=gresult.transformation,  # Can this be None?
+        init=gresult.transformation,
         estimation_method=o3d.pipelines.registration.TransformationEstimationForColoredICP(
-            lambda_geometric=0.8
+            lambda_geometric=0.8 # Weight of the geometric objective; (1-lambda) for the photometric objective
         ),
         criteria=o3d.pipelines.registration.ICPConvergenceCriteria(
             relative_fitness=1e-6, relative_rmse=1e-6, max_iteration=100

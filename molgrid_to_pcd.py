@@ -65,6 +65,13 @@ name_to_rgb_molgrid = {
     "Boron": (153, 76, 0),
 }
 
+molgrid_color_groups = [
+    [[96 / 255, 96 / 255, 96 / 255], [96 / 255, 96 / 255, 96 / 255], [192 / 255, 192 / 255, 192 / 255], [192 / 255, 192 / 255, 192 / 255]], # Carbon
+    [[0 / 255, 128 / 255, 255 / 255], [102 / 255, 178 / 255, 255 / 255], [204 / 255, 229 / 255, 255 / 255]], # Nitrogen
+    [[153 / 255, 0 / 255, 0 / 255], [255 / 255, 0 / 255, 0 / 255], [255 / 255, 102 / 255, 102 / 255]], # Oxygen
+    [[0 / 255, 204 / 255, 0 / 255]], # Halogens
+    [[204 / 255, 204 / 255, 0 / 255], [153 / 255, 153 / 255, 0 / 255]], # Sulfur
+]
 
 def mol_to_grid(obmol, dimension, resolution, typer, c=None):
     gm = molgrid.GridMaker(resolution=resolution, dimension=dimension)
@@ -109,10 +116,15 @@ def _grid_lims(o, L):
 
 
 def grid_to_pcd(
-    grid, center, dimension, resolution, typer, color_map=name_to_rgb_molgrid
+    grid, center, dimension, resolution, typer, color_map=name_to_rgb_molgrid, surface=True
 ):
 
-    cloud = torch.logical_and(grid[0] >= 0.4, grid[0] <= 0.6)
+    if surface:
+        # Compute isosurface
+        cloud = torch.logical_and(grid[0] >= 0.4, grid[0] <= 0.6)
+    else:
+        # Use dense representation
+        cloud = grid[0] > 0.5
 
     # Number of voxels in one direction
     n_steps = round(dimension / resolution) + 1

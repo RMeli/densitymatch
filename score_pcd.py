@@ -1,10 +1,6 @@
 """
 Fit and score point clouds using SENSAAS-based algorithms.
 
-Changes to the original algorithm:
-* Works directly with point clouds
-* Does not perform additional scoring
-
 ---
 
 BSD 3-Clause License
@@ -41,8 +37,35 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import open3d as o3d
 import numpy as np
 
+def subsample_pcd_colors(pcd, colors):
+    """
+    Subsample point clouds by only retaining given colors.
 
-def fit_and_score(pcds, voxel_size, threshold, fast=False):
+    Parameters
+    ----------
+    pcd:
+        Point cloud (Open3D)
+    colors:
+        Colors to retain (RGB values in the interval [0,1])
+    """
+    # Get original point cloud points and colors as numpy arrays
+    allpoints = np.asarray(pcd.points)
+    allcolors =  np.asarray(pcd.colors)
+
+    shape = allpoints.shape
+
+    mask = np.zeros(shape[0], dtype=bool)
+    for color in colors:
+        mask = np.logical_or(mask, np.all(np.isclose(allcolors, color), axis=1))
+
+    # Create new point cloud with only the given colors
+    newpcd = o3d.geometry.PointCloud()
+    newpcd.points = o3d.utility.Vector3dVector(allpoints[mask,:])
+    newpcd.colors = o3d.utility.Vector3dVector(allcolors[mask,:])
+
+    return newpcd
+
+def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
     """
     Parameters
     ----------
@@ -52,6 +75,10 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False):
         PCD voxel_size
     threshold:
         Distance threshold (maximum correspondence distance)
+    fast:
+        Use faster global registration
+    color_groups:
+        Groups of colors for additional rescoring with color subsampling
     """
 
     assert len(pcds) == 2
@@ -140,12 +167,40 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False):
     )
 
     # The 4x4 transformation matrix represents and affine transformation:
-    #   r00 r01 r02 t0
-    #   r10 r11 r12 t1
-    #   r20 r21 r22 t2
-    #   0   0   0   1
+        #   r00 r01 r02 t0
+        #   r10 r11 r12 t1
+        #   r20 r21 r22 t2
+        #   0   0   0   1
 
-    return gfit, cfit, cresult.transformation
+    if color_groups is None:
+        return gfit, cfit, cresult.transformation
+    else:
+        hfit = 0
+        nonzero = 0
+        for colors in color_groups:
+            cpcd1 = subsample_pcd_colors(pcds[0], colors)
+            cpcd2 = subsample_pcd_colors(pcds[1], colors)
+
+            cpcd1.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
+            )
+            cpcd1.estimate_normals(
+                o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
+            )
+
+            r = o3d.pipelines.registration.evaluate_registration(
+                    cpcd1, cpcd2, threshold, cresult.transformation
+                )
+            
+            if r.fitness > 0:
+                nonzero += 1
+                hfit += r.fitness
+
+        if nonzero != 0:
+            hfit /= nonzero
+
+        return gfit, cfit, hfit, cresult.transformation
+
 
 
 if __name__ == "__main__":

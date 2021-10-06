@@ -37,6 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import open3d as o3d
 import numpy as np
 
+
 def subsample_pcd_colors(pcd, colors):
     """
     Subsample point clouds by only retaining given colors.
@@ -50,7 +51,7 @@ def subsample_pcd_colors(pcd, colors):
     """
     # Get original point cloud points and colors as numpy arrays
     allpoints = np.asarray(pcd.points)
-    allcolors =  np.asarray(pcd.colors)
+    allcolors = np.asarray(pcd.colors)
 
     shape = allpoints.shape
 
@@ -60,10 +61,11 @@ def subsample_pcd_colors(pcd, colors):
 
     # Create new point cloud with only the given colors
     newpcd = o3d.geometry.PointCloud()
-    newpcd.points = o3d.utility.Vector3dVector(allpoints[mask,:])
-    newpcd.colors = o3d.utility.Vector3dVector(allcolors[mask,:])
+    newpcd.points = o3d.utility.Vector3dVector(allpoints[mask, :])
+    newpcd.colors = o3d.utility.Vector3dVector(allcolors[mask, :])
 
     return newpcd
+
 
 def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
     """
@@ -135,10 +137,7 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
     else:
         # This is a faster version of global point cloud registration
         gresult = o3d.pipelines.registration.registration_fast_based_on_feature_matching(
-            pcds[0],
-            pcds[1],
-            fpfhs[0],
-            fpfhs[1],
+            pcds[0], pcds[1], fpfhs[0], fpfhs[1],
         )
 
     gfit = o3d.pipelines.registration.evaluate_registration(
@@ -155,7 +154,7 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
         max_correspondence_distance=radius_normal,
         init=gresult.transformation,
         estimation_method=o3d.pipelines.registration.TransformationEstimationForColoredICP(
-            lambda_geometric=0.8 # Weight of the geometric objective; (1-lambda) for the photometric objective
+            lambda_geometric=0.8  # Weight of the geometric objective; (1-lambda) for the photometric objective
         ),
         criteria=o3d.pipelines.registration.ICPConvergenceCriteria(
             relative_fitness=1e-6, relative_rmse=1e-6, max_iteration=100
@@ -167,10 +166,10 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
     )
 
     # The 4x4 transformation matrix represents and affine transformation:
-        #   r00 r01 r02 t0
-        #   r10 r11 r12 t1
-        #   r20 r21 r22 t2
-        #   0   0   0   1
+    #   r00 r01 r02 t0
+    #   r10 r11 r12 t1
+    #   r20 r21 r22 t2
+    #   0   0   0   1
 
     if color_groups is None:
         return gfit, cfit, cresult.transformation
@@ -182,16 +181,16 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
             cpcd2 = subsample_pcd_colors(pcds[1], colors)
 
             cpcd1.estimate_normals(
-            o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
+                o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
             )
             cpcd1.estimate_normals(
                 o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30)
             )
 
             r = o3d.pipelines.registration.evaluate_registration(
-                    cpcd1, cpcd2, threshold, cresult.transformation
-                )
-            
+                cpcd1, cpcd2, threshold, cresult.transformation
+            )
+
             if r.fitness > 0:
                 nonzero += 1
                 hfit += r.fitness
@@ -200,7 +199,6 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
             hfit /= nonzero
 
         return gfit, cfit, hfit, cresult.transformation
-
 
 
 if __name__ == "__main__":

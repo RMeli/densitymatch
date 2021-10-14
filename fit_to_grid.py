@@ -173,7 +173,7 @@ def fit_atoms(diff, center, resolution, ligmap, verbose=False):
         obmol.write("sdf", "atoms.sdf", overwrite=True)
 
     # Reconstruct OpenBabel molecule from AtomStruct
-    obmol, mismatches, visited = fitting.make_obmol(asmol)
+    obmol, mismatches, visited = fitting.make_obmol(asmol, remove_close_atoms=True)
     if verbose:
         obmol.write("sdf", "obmol.sdf", overwrite=True)
 
@@ -202,7 +202,7 @@ def molgrid_diff_to_mol(diff, center, resolution, ligmap, scaffold=None, verbose
     center:
         Grid centers
     resolution:
-        Grid resolutioon
+        Grid resolution
     ligmap:
         Path to ligand mapping file
     scaffold:

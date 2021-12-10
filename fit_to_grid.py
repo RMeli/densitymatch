@@ -109,23 +109,30 @@ def remove_overlapping(mol1, mol2, threshold=0.3):
     """
     Remove atoms from mol2 overlapping with mol1.
     """
-
-    emol = Chem.EditableMol(mol2)
+    from copy import deepcopy
 
     # TODO: Optimize
     adists = atom_distances(mol1, mol2)
 
     to_remove = []
     for _, j, d in adists:
-        if d < threshold:
+        if d <= threshold:
             to_remove.append(j)
 
     # When atom is deleted the index is lost
     # https://sourceforge.net/p/rdkit/mailman/rdkit-discuss/thread/2017062518163195443411%40gmail.com/
-    for r in sorted(to_remove, reverse=True):
-        emol.RemoveAtom(r)
+    #emol = Chem.EditableMol(mol2)
+    #for r in sorted(to_remove, reverse=True):
+    #    emol.RemoveAtom(r)
 
-    return emol.GetMol()
+    # https://sourceforge.net/p/rdkit/mailman/message/28155441/
+    emol = deepcopy(mol2)
+    for r in to_remove:
+        emol.GetAtomWithIdx(r).SetAtomicNum(0)
+
+    #return emol.GetMol()
+    return Chem.DeleteSubstructs(emol, Chem.MolFromSmarts('[#0]'))
+
 
 
 def fit_atoms(diff, center, resolution, ligmap, verbose=False):

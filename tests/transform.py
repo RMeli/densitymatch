@@ -24,6 +24,8 @@ for fmol in args.mols:
     # Translation vector
     t = rng.random((3,)) * 3
 
+    # This does not sample 3D rotations uniformly
+    # but we don't care in this context
     # Rotation matrix
     angle = np.pi * rng.random()
     e = rng.random((3,))

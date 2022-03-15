@@ -22,7 +22,7 @@ for fmol in args.mols:
     mol = next(s)
 
     # Translation vector
-    t = rng.random((3,)) * 10
+    t = rng.random((3,)) * 3
 
     # Rotation matrix
     angle = np.pi * rng.random()

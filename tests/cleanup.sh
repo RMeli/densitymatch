@@ -1,7 +1,9 @@
 #!/bin/bash
 
+rm ligands/*/*_tran.*
 rm ligands/*/conf_?.*
 rm ligands/*/frag_?_?.*
+rm ligands/*/murcko_*.*
 
 rm ligands/*/allfrags.sdf
 rm catsensaas.sdf

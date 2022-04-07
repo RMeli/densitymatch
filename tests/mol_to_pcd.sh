@@ -25,9 +25,14 @@ for ligand in "BRD4" "CDK2"
 do
     for sdf in $(ls ligands/${ligand}/*_tran.sdf)
     do
-        fout="${sdf%.*}.pcd"
-
+        # SEENSAS color scheme
+        fout="${sdf%.*}_molgrid.pcd"
         singularity run --nv --app python ../development/densitymatch.sif \
-            ../molgrid_to_pcd.py ${sdf} -m ../files/ligmap -r 0.5 -o ${fout} -v
+            ../molgrid_to_pcd.py ${sdf} -m ../files/ligmap -o ${fout} -v
+
+        # libmolgrid color scheme
+        fout="${sdf%.*}_sensaas.pcd"
+        singularity run --nv --app python ../development/densitymatch.sif \
+            ../molgrid_to_pcd.py ${sdf} -m ../files/ligmap -o ${fout} -v --sensaas
     done
 done

@@ -42,23 +42,25 @@ name_to_rgb_sensaas = defaultdict(
     },
 )
 
+# Some elements are combines because their propery can change 
+# in fragments (change of substituents).
 name_to_rgb_molgrid = {
-    "AliphaticCarbonXSHydrophobe": (64, 64, 64),
+    "AliphaticCarbonXSHydrophobe": (96, 96, 96),
     "AliphaticCarbonXSNonHydrophobe": (96, 96, 96),
     "AromaticCarbonXSHydrophobe": (192, 192, 192),
-    "AromaticCarbonXSNonHydrophobe": (160, 160, 160),
+    "AromaticCarbonXSNonHydrophobe": (192, 192, 192),
     "Bromine": (102, 0, 51),
     "Chlorine": (0, 204, 0),
     "Fluorine": (51, 255, 255),
     "Nitrogen": (0, 0, 255),
-    "NitrogenXSAcceptor": (0, 0, 204),
-    "NitrogenXSDonor": (0, 0, 153),
-    "NitrogenXSDonorAcceptor": (0, 0, 102),
+    "NitrogenXSAcceptor": (0, 0, 255),
+    "NitrogenXSDonor": (0, 0, 255),
+    "NitrogenXSDonorAcceptor": (0, 0, 255),
     "Oxygen": (153, 0, 0),
-    "OxygenXSAcceptor": (255, 0, 0),
-    "OxygenXSDonorAcceptor": (204, 0, 0),
+    "OxygenXSAcceptor": (153, 0, 0),
+    "OxygenXSDonorAcceptor": (153, 0, 0),
     "Phosphorus": (153, 76, 0),
-    "Sulfur": (204, 204, 0),
+    "Sulfur": (153, 153, 0),
     "SulfurAcceptor": (153, 153, 0),
     "Iodine": (0, 204, 0),
     "Boron": (153, 76, 0),

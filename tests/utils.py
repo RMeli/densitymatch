@@ -25,6 +25,7 @@ from rdkit.Chem import rdMolTransforms
 from spyrmsd.rmsd import rmsdwrapper
 from spyrmsd.molecule import Molecule
 
+
 def align_and_show(mol1, pcd1, mol2, pcd2):
 
     rmsd_init = rmsdwrapper(Molecule.from_rdkit(mol1), Molecule.from_rdkit(mol2))
@@ -42,15 +43,9 @@ def align_and_show(mol1, pcd1, mol2, pcd2):
     # Create view
     p = py3Dmol.view()
     # Select correct conformers
-    p.addModel(
-        Chem.MolToMolBlock(mol1, confId=0), "sdf"
-    )  # mol1 original coordinates
-    p.addModel(
-        Chem.MolToMolBlock(mol1, confId=1), "sdf"
-    )  # mol1 aligned to mol2
-    p.addModel(
-        Chem.MolToMolBlock(mol2, confId=0), "sdf"
-    )  # mol2 original coordinates
+    p.addModel(Chem.MolToMolBlock(mol1, confId=0), "sdf")  # mol1 original coordinates
+    p.addModel(Chem.MolToMolBlock(mol1, confId=1), "sdf")  # mol1 aligned to mol2
+    p.addModel(Chem.MolToMolBlock(mol2, confId=0), "sdf")  # mol2 original coordinates
 
     p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
     p.setStyle({"model": 1}, {"stick": {"colorscheme": "purpleCarbon"}})

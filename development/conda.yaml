@@ -1,11 +1,11 @@
 name: densitymatch
 channels:
-  - conda-forge
   - pytorch
+  - conda-forge
   - open3d-admin
   - nvidia
 dependencies:
-  - python=3.7
+  - python=3.9
   - ipython
   - pip
 
@@ -20,13 +20,13 @@ dependencies:
   - openbabel
   - spyrmsd
 
-  - cudatoolkit=11.1
+  - cudatoolkit=11.3
   - pytorch
 
-  - open3d
   - py3Dmol
 
   - jupyter
 
   - pip:
+    - open3d
     - molgrid

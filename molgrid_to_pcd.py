@@ -42,49 +42,27 @@ name_to_rgb_sensaas = defaultdict(
     },
 )
 
-# TODO: Change color scheme to account for all atom types?
 name_to_rgb_molgrid = {
-    "AliphaticCarbonXSHydrophobe": (96, 96, 96),
+    "AliphaticCarbonXSHydrophobe": (64, 64, 64),
     "AliphaticCarbonXSNonHydrophobe": (96, 96, 96),
     "AromaticCarbonXSHydrophobe": (192, 192, 192),
-    "AromaticCarbonXSNonHydrophobe": (192, 192, 192),
-    "Bromine": (0, 204, 0),
+    "AromaticCarbonXSNonHydrophobe": (160, 160, 160),
+    "Bromine": (102, 0, 51),
     "Chlorine": (0, 204, 0),
-    "Fluorine": (0, 204, 0),
-    "Nitrogen": (0, 0, 204),
-    "NitrogenXSAcceptor": (0, 128, 255),
-    "NitrogenXSDonor": (102, 178, 255),
-    "NitrogenXSDonorAcceptor": (204, 229, 255),
+    "Fluorine": (51, 255, 255),
+    "Nitrogen": (0, 0, 255),
+    "NitrogenXSAcceptor": (0, 0, 204),
+    "NitrogenXSDonor": (0, 0, 153),
+    "NitrogenXSDonorAcceptor": (0, 0, 102),
     "Oxygen": (153, 0, 0),
     "OxygenXSAcceptor": (255, 0, 0),
-    "OxygenXSDonorAcceptor": (255, 102, 102),
+    "OxygenXSDonorAcceptor": (204, 0, 0),
     "Phosphorus": (153, 76, 0),
     "Sulfur": (204, 204, 0),
     "SulfurAcceptor": (153, 153, 0),
     "Iodine": (0, 204, 0),
     "Boron": (153, 76, 0),
 }
-
-molgrid_color_groups = [
-    [
-        [96 / 255, 96 / 255, 96 / 255],
-        [96 / 255, 96 / 255, 96 / 255],
-        [192 / 255, 192 / 255, 192 / 255],
-        [192 / 255, 192 / 255, 192 / 255],
-    ],  # Carbon
-    [
-        [0 / 255, 128 / 255, 255 / 255],
-        [102 / 255, 178 / 255, 255 / 255],
-        [204 / 255, 229 / 255, 255 / 255],
-    ],  # Nitrogen
-    [
-        [153 / 255, 0 / 255, 0 / 255],
-        [255 / 255, 0 / 255, 0 / 255],
-        [255 / 255, 102 / 255, 102 / 255],
-    ],  # Oxygen
-    [[0 / 255, 204 / 255, 0 / 255]],  # Halogens
-    [[204 / 255, 204 / 255, 0 / 255], [153 / 255, 153 / 255, 0 / 255]],  # Sulfur
-]
 
 
 def mol_to_grid(obmol, dimension, resolution, typer, c=None):

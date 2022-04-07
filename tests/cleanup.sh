@@ -1,5 +1,6 @@
 #!/bin/bash
 
+rm ligands/*/*.pcd
 rm ligands/*/*_tran.*
 rm ligands/*/conf_?.*
 rm ligands/*/frag_?_?.*

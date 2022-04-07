@@ -121,8 +121,8 @@ def remove_overlapping(mol1, mol2, threshold=0.3):
 
     # When atom is deleted the index is lost
     # https://sourceforge.net/p/rdkit/mailman/rdkit-discuss/thread/2017062518163195443411%40gmail.com/
-    #emol = Chem.EditableMol(mol2)
-    #for r in sorted(to_remove, reverse=True):
+    # emol = Chem.EditableMol(mol2)
+    # for r in sorted(to_remove, reverse=True):
     #    emol.RemoveAtom(r)
 
     # https://sourceforge.net/p/rdkit/mailman/message/28155441/
@@ -130,9 +130,8 @@ def remove_overlapping(mol1, mol2, threshold=0.3):
     for r in to_remove:
         emol.GetAtomWithIdx(r).SetAtomicNum(0)
 
-    #return emol.GetMol()
-    return Chem.DeleteSubstructs(emol, Chem.MolFromSmarts('[#0]'))
-
+    # return emol.GetMol()
+    return Chem.DeleteSubstructs(emol, Chem.MolFromSmarts("[#0]"))
 
 
 def fit_atoms(diff, center, resolution, ligmap, verbose=False):

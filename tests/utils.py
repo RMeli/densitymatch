@@ -26,6 +26,23 @@ from spyrmsd.rmsd import rmsdwrapper
 from spyrmsd.molecule import Molecule
 
 
+def show(mol1, mol2):
+    # Create view
+    p = py3Dmol.view()
+    # Select correct conformers
+    p.addModel(Chem.MolToMolBlock(mol1, confId=0), "sdf")  # mol1 original coordinates
+    p.addModel(Chem.MolToMolBlock(mol1, confId=1), "sdf")  # mol1 aligned to mol2
+    p.addModel(Chem.MolToMolBlock(mol2, confId=0), "sdf")  # mol2 original coordinates
+
+    p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
+    p.setStyle({"model": 1}, {"stick": {"colorscheme": "purpleCarbon"}})
+    p.setStyle({"model": 2}, {"stick": {"colorscheme": "greyCarbon"}})
+
+    p.zoomTo()
+
+    return p
+
+
 def align_and_show(mol1, pcd1, mol2, pcd2):
 
     rmsd_init = rmsdwrapper(Molecule.from_rdkit(mol1), Molecule.from_rdkit(mol2))
@@ -40,12 +57,18 @@ def align_and_show(mol1, pcd1, mol2, pcd2):
 
     rmsd_final = rmsdwrapper(Molecule.from_rdkit(cmol1), Molecule.from_rdkit(mol2))
 
+    p = show(mol1, mol2)
+
+    return p, mol1
+
+
+def show_scaffold(mol, smol):
     # Create view
     p = py3Dmol.view()
     # Select correct conformers
-    p.addModel(Chem.MolToMolBlock(mol1, confId=0), "sdf")  # mol1 original coordinates
-    p.addModel(Chem.MolToMolBlock(mol1, confId=1), "sdf")  # mol1 aligned to mol2
-    p.addModel(Chem.MolToMolBlock(mol2, confId=0), "sdf")  # mol2 original coordinates
+    p.addModel(Chem.MolToMolBlock(mol, confId=0), "sdf")  # mol1 original coordinates
+    p.addModel(Chem.MolToMolBlock(smol, confId=1), "sdf")  # mol1 aligned to mol2
+    p.addModel(Chem.MolToMolBlock(smol, confId=0), "sdf")  # mol2 original coordinates
 
     p.setStyle({"model": 0}, {"stick": {"colorscheme": "lightgreyCarbon"}})
     p.setStyle({"model": 1}, {"stick": {"colorscheme": "purpleCarbon"}})
@@ -53,7 +76,44 @@ def align_and_show(mol1, pcd1, mol2, pcd2):
 
     p.zoomTo()
 
-    return rmsd_init[0], rmsd_final[0], p, mol1
+    return p
+
+
+def align_and_show_scaffold(mol, pcd, smol, spcd, sref):
+    """
+    Align scaffold molecules and show.
+
+    Parameters
+    ----------
+    mol:
+        Full molecule
+    pcd:
+        Fill molecule point cloud
+    smol:
+        Murcko scaffold
+    spcd:
+        Murcko scaffold point cloud
+    sref:
+        Murcko scaffold reference
+    """
+
+    # RMSD between reference and translated Murcko scaffolds
+    rmsd_init = rmsdwrapper(Molecule.from_rdkit(smol), Molecule.from_rdkit(sref))
+
+    # Copy original molecule without conformers
+    csmol = Chem.Mol(smol, True)
+
+    # Fit scaffold PCD to molecule PCD
+    _, _, tran = fit_and_score((spcd, pcd), voxel_size=0.5, threshold=0.5)
+    transform_and_add_conformer(smol, tran, fromConfId=0, toConfId=1)
+
+    csmol.AddConformer(smol.GetConformer(1), assignId=True)
+
+    rmsd_final = rmsdwrapper(Molecule.from_rdkit(csmol), Molecule.from_rdkit(sref))
+
+    p = show_scaffold(mol, smol)
+
+    return rmsd_init[0], rmsd_final[0], p, smol
 
 
 def transform_and_add_conformer(mol, tran, fromConfId=0, toConfId=1) -> None:

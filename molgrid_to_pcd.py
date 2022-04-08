@@ -42,7 +42,7 @@ name_to_rgb_sensaas = defaultdict(
     },
 )
 
-# Some elements are combines because their propery can change 
+# Some elements are combines because their propery can change
 # in fragments (change of substituents).
 name_to_rgb_molgrid = {
     "AliphaticCarbonXSHydrophobe": (96, 96, 96),

@@ -149,7 +149,11 @@ def transform_and_add_conformer(mol, tran, fromConfId=0, toConfId=1) -> None:
     for i in range(n_atoms):
         conf.SetAtomPosition(i, coords_new[i, :])
 
-    # Conformer ID manually assigned above, avoid automatic assignssment here
+    # Ensure that the previous conformer is removed
+    # RDKit does not seem to overwrite conformers
+    mol.RemoveConformer(toConfId)
+
+    # Conformer ID manually assigned above, avoid automatic assignment here
     _ = mol.AddConformer(conf, assignId=False)
 
 

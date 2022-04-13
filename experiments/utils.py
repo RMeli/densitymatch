@@ -50,7 +50,7 @@ def align_and_show(mol1, pcd1, mol2, pcd2):
     # Copy original molecule without conformers
     cmol1 = Chem.Mol(mol1, True)
 
-    fit, cfit, tran = fit_and_score((pcd1, pcd2), voxel_size=0.5, threshold=0.5)
+    _, _, tran = fit_and_score((pcd1, pcd2), voxel_size=0.5, threshold=0.5)
     transform_and_add_conformer(mol1, tran, fromConfId=0, toConfId=1)
 
     cmol1.AddConformer(mol1.GetConformer(1), assignId=True)
@@ -59,7 +59,7 @@ def align_and_show(mol1, pcd1, mol2, pcd2):
 
     p = show(mol1, mol2)
 
-    return p, mol1
+    return rmsd_init[0], rmsd_final[0], p, mol1
 
 
 def show_scaffold(mol, smol):

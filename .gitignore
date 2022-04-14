@@ -12,8 +12,8 @@ tests/bestsensaas.sdf
 tests/catsensaas.sdf
 tests/matrix-sensaas.txt
 fragments/Enamine*.sdf
-fragments/DSIpoised/
-fragments/VEHICLe/
+fragments/_DSIpoised/
+fragments/_VEHICLe/
 
 # nohup
 nohup.out

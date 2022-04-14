@@ -39,15 +39,17 @@ if __name__ == "__main__":
 
     PandasTools.AddMoleculeColumnToFrame(df, smi_col, "mol")
 
+    outpath = libname if args.directory is None else args.directory
+    print(outpath)
+
     for idx, row in tqdm.tqdm(df.iterrows(), desc=libname, total=len(df)):
         molh = Chem.AddHs(row.mol, addCoords=True)
 
-        param = rdDistGeom.ETKDGv2()
+        param = rdDistGeom.ETKDGv3()
         param.random_seed = args.seed
         cids = rdDistGeom.EmbedMultipleConfs(molh, args.conformers, param)
 
-        outsdf = os.path.join(libname, f"fragment_{idx}.sdf")
-
+        outsdf = os.path.join(outpath, f"fragment_{idx}.sdf")
         w = Chem.SDWriter(outsdf)
         for cid in cids:
             molh.SetProp("CID", str(cid))  # Add conformer ID as molecular property

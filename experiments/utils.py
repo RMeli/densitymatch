@@ -62,6 +62,12 @@ def align_and_show(mol1, pcd1, mol2, pcd2):
     return rmsd_init[0], rmsd_final[0], p, mol1
 
 
+def align(mol1, pcd1, pcd2):
+    gfit, cfit, tran = fit_and_score((pcd1, pcd2), voxel_size=0.5, threshold=0.5)
+    transform_and_add_conformer(mol1, tran, fromConfId=0, toConfId=1)
+    return gfit, cfit
+
+
 def show_scaffold(mol, smol):
     # Create view
     p = py3Dmol.view()

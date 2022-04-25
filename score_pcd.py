@@ -179,8 +179,8 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
     if color_groups is None:
         return gfit, cfit, cresult.transformation
     else:
-        hfit = 0
-        nonzero = 0
+        np_total = 0 # Total number of points
+        np_matched = 0 # Number of matched points
         for colors in color_groups:
             cpcd1 = subsample_pcd_colors(pcds[0], colors)
             cpcd2 = subsample_pcd_colors(pcds[1], colors)
@@ -196,12 +196,10 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
                 cpcd1, cpcd2, threshold, cresult.transformation
             )
 
-            if r.fitness > 0:
-                nonzero += 1
-                hfit += r.fitness
+            np_matched += len(r.correspondence_set)
+            np_total += len(cpcd1.points)
 
-        if nonzero != 0:
-            hfit /= nonzero
+        hfit = np_matched / np_total
 
         return gfit, cfit, hfit, cresult.transformation
 

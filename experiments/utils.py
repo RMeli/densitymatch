@@ -9,6 +9,7 @@ import sys
 sys.path.append("..")
 
 from score_pcd import fit_and_score
+from molgrid_to_pcd import sensaas_color_groups_rgb_molgrid
 
 import numpy as np
 from numpy.random import default_rng
@@ -62,9 +63,21 @@ def align_and_show(mol1, pcd1, mol2, pcd2):
     return rmsd_init[0], rmsd_final[0], p, mol1
 
 
-def align(mol1, pcd1, pcd2):
-    gfit, cfit, tran = fit_and_score((pcd1, pcd2), voxel_size=0.5, threshold=0.5)
-    transform_and_add_conformer(mol1, tran, fromConfId=0, toConfId=1)
+def align(mol1, pcd1, pcd2, hfit=False):
+    if hfit:
+        gfit, cfit, hhfit, tran = fit_and_score(
+            (pcd1, pcd2),
+            voxel_size=0.5,
+            threshold=0.5,
+            color_groups=sensaas_color_groups_rgb_molgrid,
+        )
+        transform_and_add_conformer(mol1, tran, fromConfId=0, toConfId=1)
+        return gfit, cfit, hhfit
+    else:
+        gfit, cfit, tran = fit_and_score((pcd1, pcd2), voxel_size=0.5, threshold=0.5)
+        transform_and_add_conformer(mol1, tran, fromConfId=0, toConfId=1)
+        return gfit, cfit
+
     return gfit, cfit
 
 

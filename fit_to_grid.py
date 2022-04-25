@@ -276,11 +276,7 @@ if __name__ == "__main__":
         "-m", "--ligmap", type=str, default="files/ligmap", help="Ligand types file"
     )
     p.add_argument(
-        "-o",
-        "--output",
-        type=str,
-        default="rdmolfinal.mol",
-        help="Output file",
+        "-o", "--output", type=str, default="rdmolfinal.mol", help="Output file",
     )
     p.add_argument("-v", "--verbose", action="store_true", help="Verbose")
 

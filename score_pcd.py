@@ -136,13 +136,8 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
         )
     else:
         # This is a faster version of global point cloud registration
-        gresult = (
-            o3d.pipelines.registration.registration_fast_based_on_feature_matching(
-                pcds[0],
-                pcds[1],
-                fpfhs[0],
-                fpfhs[1],
-            )
+        gresult = o3d.pipelines.registration.registration_fast_based_on_feature_matching(
+            pcds[0], pcds[1], fpfhs[0], fpfhs[1],
         )
 
     gfit = o3d.pipelines.registration.evaluate_registration(
@@ -179,8 +174,8 @@ def fit_and_score(pcds, voxel_size, threshold, fast=False, color_groups=None):
     if color_groups is None:
         return gfit, cfit, cresult.transformation
     else:
-        np_total = 0 # Total number of points
-        np_matched = 0 # Number of matched points
+        np_total = 0  # Total number of points
+        np_matched = 0  # Number of matched points
         for colors in color_groups:
             cpcd1 = subsample_pcd_colors(pcds[0], colors)
             cpcd2 = subsample_pcd_colors(pcds[1], colors)

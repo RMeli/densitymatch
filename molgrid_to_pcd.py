@@ -91,6 +91,28 @@ sensaas_color_groups = (
     # No molgrid supported atoms in SENSAAS class 4
 )
 
+# Would not score benzene correctly...
+sensaas_color_groups_nocarbon = (
+    # SENSAAS class 1 ignored
+    (
+        "Fluorine",
+        "Nitrogen",
+        "NitrogenXSAcceptor",
+        "NitrogenXSDonor",
+        "NitrogenXSDonorAcceptor",
+        "Oxygen",
+        "OxygenXSAcceptor",
+        "OxygenXSDonorAcceptor",
+        "Sulfur",
+        "SulfurAcceptor",
+    ),  # SENSAAS class 2
+    (
+        "Phosphorus",
+        "Boron",
+    ),  # SENSAAS class 3
+    # No molgrid supported atoms in SENSAAS class 4
+)
+
 # SENSAAS classes for molgrid coloring method
 # Convert from [0, 255] to [0, 1]
 sensaas_color_groups_rgb_molgrid = [
@@ -98,6 +120,10 @@ sensaas_color_groups_rgb_molgrid = [
     for g in sensaas_color_groups
 ]
 
+sensaas_color_groups_rgb_molgrid_nocarbon = [
+    [tuple(name_to_rgb_molgrid[n][i] / 255 for i in range(3)) for n in g]
+    for g in sensaas_color_groups
+]
 
 def mol_to_grid(obmol, dimension, resolution, typer, c=None):
     gm = molgrid.GridMaker(resolution=resolution, dimension=dimension)

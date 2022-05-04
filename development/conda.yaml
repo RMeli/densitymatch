@@ -24,6 +24,8 @@ dependencies:
   - pytorch
 
   - py3Dmol
+  - pyvista
+  - ipyvtklink
 
   - jupyter
 

@@ -125,6 +125,7 @@ sensaas_color_groups_rgb_molgrid_nocarbon = [
     for g in sensaas_color_groups
 ]
 
+
 def mol_to_grid(obmol, dimension, resolution, typer, c=None):
     gm = molgrid.GridMaker(resolution=resolution, dimension=dimension)
 

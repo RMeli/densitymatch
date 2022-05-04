@@ -10,6 +10,7 @@ import pandas as pd
 
 sorting_criteria = "gfit + hfit"
 
+
 def render(df_mol, lig, idx=0):
     """
     Render alignment using PyMol API
@@ -39,6 +40,7 @@ def render(df_mol, lig, idx=0):
 
     return cmd.ipython_image()
 
+
 for system in ["BRD4", "CDK2"]:
 
     with open(f"{system}-VEHICLe.pkl", "br") as fin:
@@ -55,7 +57,7 @@ for system in ["BRD4", "CDK2"]:
     df.index.names = ["lig", "idx"]
 
     df["gfit + hfit"] = df["gfit"] + df["hfit"]
-    
+
     for lig in list(df.index.levels[0]):
         df_mol = (
             df.query("lig == @lig")

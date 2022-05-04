@@ -14,6 +14,7 @@ tests/matrix-sensaas.txt
 fragments/Enamine*.sdf
 fragments/_DSIpoised/
 fragments/_VEHICLe/
+images/ligands/
 
 # nohup
 nohup.out

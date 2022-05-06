@@ -29,7 +29,7 @@ def render(df_mol, lig, idx=0):
     cmd.load("mol-tmp.sdf", "mol")
     cmd.orient("mol")
     cmd.center("mol")
-    cmd.zoom("mol", 1.0)
+    cmd.zoom("mol", 2.0)
 
     cmd.set("depth_cue", 0)
     cmd.set("ray_trace_color", "black")

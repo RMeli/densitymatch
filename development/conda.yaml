@@ -29,7 +29,7 @@ dependencies:
 
   - jupyter
 
-  - pymol-open-source
+  - pymol-open-source>=2.5
 
   - pip:
     - open3d

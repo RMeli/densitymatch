@@ -17,4 +17,5 @@ sensaas(){
 }
 export -f sensaas # Export function for GNU parallel
 
-parallel -j 6 sensaas ::: "BRD4/ligand-1" "BRD4/ligand-2" "BRD4/ligand-3" "BRD4/ligand-4" "BRD4/ligand-5" "BRD4/ligand-6" "BRD4/ligand-7" "BRD4/ligand-8" "BRD4/ligand-9" "BRD4/ligand-10"
+parallel -j 4 sensaas ::: "CDK2/4fkp_B_LS5" "CDK2/4fkq_B_42K" "CDK2/4fkr_B_45K" "CDK2/4fks_B_46K" "CDK2/4fkt_B_48K" "CDK2/4fku_D_60K" "CDK2/4fkv_B_61K" "CDK2/4fkw_B_62K"
+

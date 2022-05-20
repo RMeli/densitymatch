@@ -4,6 +4,7 @@ Render top 3 alignment for all inhibitors for both CDK2 and BRD4
 from pymol import cmd
 import os
 
+
 def render(frag, lig):
     """
     Render alignment using PyMol API
@@ -27,9 +28,9 @@ def render(frag, lig):
     return cmd.ipython_image()
 
 
-for system in ["BRD4"]:
+for system in ["CDK2"]:
     for lig in os.listdir(system):
-        
+
         ffrag = os.path.join(system, lig, "bestsensaas.sdf")
         flig = os.path.join("../ligands/", system, f"{lig}.sdf")
 

@@ -19,7 +19,7 @@ def viz(lig, dir="grids"):
         namedx = f.replace("grids/", "")
 
         cmd.load(f, namedx)
-        cmd.isomesh("m" + namedx, namedx, 0.5)
+        cmd.isomesh("m" + namedx, namedx, 0.25)
 
         if "Oxygen" in namedx:
             cmd.color("red", "m" + namedx)
@@ -37,7 +37,7 @@ def viz(lig, dir="grids"):
         namedx = f.replace("grids/", "")
 
         cmd.load(f, namedx)
-        cmd.isomesh("m" + namedx, namedx, 0.5)
+        cmd.isomesh("m" + namedx, namedx, 0.25)
 
         if "Oxygen" in namedx:
             cmd.color("red", "m" + namedx)
@@ -55,7 +55,7 @@ def viz(lig, dir="grids"):
         namedx = f.replace("grids/", "")
 
         cmd.load(f, namedx)
-        cmd.isomesh("m" + namedx, namedx, 0.5)
+        cmd.isomesh("m" + namedx, namedx, 0.25)
 
         if "Oxygen" in namedx:
             cmd.color("red", "m" + namedx)

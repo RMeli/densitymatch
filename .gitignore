@@ -15,6 +15,7 @@ fragments/Enamine*.sdf
 fragments/_DSIpoised/
 fragments/_VEHICLe/
 images/ligands/
+*.dx
 
 # nohup
 nohup.out
